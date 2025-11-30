@@ -2,7 +2,7 @@
 # Install CUDA on manylinux docker image.
 set -eux
 
-VER=${1:-12.8}
+VER=${1:-12.4}
 VER=${VER//./-}  # Convert version to format used in package names
 
 dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo

@@ -14,7 +14,7 @@ name = "flash_attn_jax"
 dynamic = ["version"]
 description = "Flash Attention port for JAX"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Tri Dao", email = "tri@tridao.me" },
@@ -61,9 +61,9 @@ input = "src/flash_attn_jax/__init__.py"
 
 [tool.cibuildwheel]
 archs = ["x86_64"]
-manylinux-x86_64-image = "pytorch/manylinux2_28-builder:cuda12.8"
+manylinux-x86_64-image = "pytorch/manylinux2_28-builder:cuda12.4"
 # before-all = "bash scripts/install-cuda-linux.sh"
-build = "cp{311,312,313}-manylinux_x86_64"
+build = "cp{310}-manylinux_x86_64"
 repair-wheel-command = "auditwheel repair --exclude=libcudart.so* -w {dest_dir} {wheel}"
 
 # [tool.cibuildwheel.environment]
@@ -72,4 +72,4 @@ repair-wheel-command = "auditwheel repair --exclude=libcudart.so* -w {dest_dir} 
 
 # [[tool.cibuildwheel.overrides]]
 # select = "cp313-*"
-# manylinux-x86_64-image = "sameli/manylinux_2_34_x86_64_cuda_12.8:latest"
+# manylinux-x86_64-image = "sameli/manylinux_2_34_x86_64_cuda_12.4:latest"

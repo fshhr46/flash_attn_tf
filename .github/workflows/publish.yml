@@ -41,8 +41,8 @@ jobs:
       fail-fast: false
       matrix:
           os: [ubuntu-20.04]
-          python-version: ['cp311', 'cp312']
-          cuda-version: ['12.8']
+          python-version: ['cp310']
+          cuda-version: ['12.4']
 
     steps:
       - name: Checkout

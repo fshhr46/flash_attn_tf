@@ -13,7 +13,7 @@ Requirements:
 - Linux. Same story as with the pytorch repo. I haven't tested compilation of the jax bindings on windows.
 - JAX >= `0.5.*`. The custom call api changed in this version.
 
-To install: `pip install flash-attn-jax` will get the latest release from pypi. This gives you the cuda 12.8
+To install: `pip install flash-attn-jax` will get the latest release from pypi. This gives you the cuda 12.4
 build. CUDA 11 isn't supported any more (since jax stopped supporting it).
 
 ### Installing from source
