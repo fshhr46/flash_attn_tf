@@ -108,20 +108,3 @@ yields the fastest BERT training on cloud instances in MLPerf training 2.0 (June
   [components](https://twitter.com/gahdritz/status/1595420944880779266), it is
   up to 3x faster than AlphaFold2 to run inference on short sequences, and can
   predict 2x longer structures.
-
-## Different implementations
-
-- [Triton](https://github.com/openai/triton): an [implementation](https://github.com/openai/triton/blob/master/python/tutorials/06-fused-attention.py) of
-  FlashAttention in Triton by Phil Tillet from OpenAI. Triton is a Python-based
-  language and compiler for parallel programming.
-
-- [xformers](https://github.com/facebookresearch/xformers): The xformers team
-  has implemented [memory-efficient
-  attention](https://twitter.com/fvsmassa/status/1580229170629849089) in a
-  similar spirit to FlashAttention.
-  xformers dynamically dispatches to whichever implementation is available / faster.
-
-- [Jax](https://github.com/google/jax): an [implementation](https://github.com/lucidrains/flash-attention-jax)
-  in Jax by [lucidrains](https://github.com/lucidrains/).
-
-- [Metal](https://developer.apple.com/metal): an [implementation](https://github.com/philipturner/metal-flash-attention) in Metal by Philip Turner. This ports FlashAttention to mobile GPU architectures such as Apple silicon.

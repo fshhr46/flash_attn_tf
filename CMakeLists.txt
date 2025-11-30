@@ -102,10 +102,10 @@ endif()
 
 # Installation
 install(TARGETS flash_api
-        DESTINATION ${SKBUILD_PLATLIB_DIR}/flash_attn_jax_lib
+        DESTINATION ${SKBUILD_PLATLIB_DIR}/flash_attn_tf_lib
 )
 
-install(DIRECTORY src/flash_attn_jax/
-        DESTINATION ${SKBUILD_PLATLIB_DIR}/flash_attn_jax
+install(DIRECTORY src/flash_attn_tf/
+        DESTINATION ${SKBUILD_PLATLIB_DIR}/flash_attn_tf
         FILES_MATCHING PATTERN "*.py"
 )
