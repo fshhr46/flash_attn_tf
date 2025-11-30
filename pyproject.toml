@@ -10,9 +10,9 @@ requires = [
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "flash_attn_jax"
+name = "flash_attn_tf"
 dynamic = ["version"]
-description = "Flash Attention port for JAX"
+description = "Flash Attention port for Tensorflow"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "BSD-3-Clause" }
@@ -21,7 +21,7 @@ authors = [
     { name = "Emily Shepperd", email = "em@zlkj.in" }
 ]
 dependencies = [
-    "jax>=0.5.0, <0.8.0"
+    "tensorflow>=2.16.2"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -33,10 +33,12 @@ classifiers = [
 test = [
     "pytest>=7.0.0",
     "einops",
-    "jax[cuda12]",
+    "tensorflow>=2.16.2",
+    "ipykernel",
+    "pip"
 ]
 [project.urls]
-Homepage = "https://github.com/nshepperd/flash_attn_jax"
+Homepage = "https://github.com/fshhr46/flash_attn_tf"
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = false
@@ -57,7 +59,7 @@ CMAKE_VERBOSE_MAKEFILE = "ON"
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
-input = "src/flash_attn_jax/__init__.py"
+input = "src/flash_attn_tf/__init__.py"
 
 [tool.cibuildwheel]
 archs = ["x86_64"]
