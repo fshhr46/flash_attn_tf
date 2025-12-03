@@ -6,6 +6,27 @@ Please see [Tri Dao's repo](https://github.com/Dao-AILab/flash-attention) for mo
 FlashAttention and FlashAttention-2 are free to use and modify (see LICENSE).
 Please cite (see below) and credit FlashAttention if you use it.
 
+# Docker builder
+
+```
+docker build -t flash-attn-tf-builder \
+  --build-arg UID=$(id -u) \
+  --build-arg GID=$(id -g) \
+  --build-arg USER=$(whoami) \
+  --build-arg GROUP=$(id -gn) \
+  -f docker/Dockerfile.builder .
+```
+
+# Building `.whl` from source
+
+1. Make sure your development environment is configured (see above).
+2. Run `./scripts/build_from_source_locally.sh --install` to build the project from source and install the package on
+   your local Python environment. This is recommended during development.
+   
+   Alternatively, you can use Docker to avoid issues with local environment and make sure the built `.whl` matches CI by
+   running `./scripts/build_from_source_docker.sh`.
+
+
 ## Installation
 
 Requirements:

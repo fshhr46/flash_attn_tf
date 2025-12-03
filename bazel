@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Wrapper script for bazel
+
+set -euo pipefail
+
+# --- Configuration ---
+# Pin the Bazelisk version: Find releases at https://github.com/bazelbuild/bazelisk/releases
+BAZELISK_VERSION="v1.26.0"
+# Directory to cache the downloaded Bazelisk binary
+CACHE_DIR=".bazelisk"
+BIN_DIR="${CACHE_DIR}/bin"
+BAZELISK_BIN="${BIN_DIR}/bazelisk"
+# --- Configuration End ---
+
+# --- Helper Functions ---
+ensure_dir_exists() {
+  mkdir -p "$1"
+}
+
+get_os() {
+  case "$(uname -s)" in
+    Linux*)  echo "linux" ;;
+    Darwin*) echo "darwin" ;;
+    *)       echo "unsupported" >&2; exit 1 ;;
+  esac
+}
+
+get_arch() {
+  case "$(uname -m)" in
+    x86_64|amd64) echo "amd64" ;;
+    arm64|aarch64) echo "arm64" ;;
+    *)            echo "unsupported" >&2; exit 1 ;;
+  esac
+}
+
+download_bazelisk() {
+  local os arch download_url filename
+  os=$(get_os)
+  arch=$(get_arch)
+  filename="bazelisk-${os}-${arch}"
+  download_url="https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/${filename}"
+
+  echo "Bazelisk not found locally or in PATH. Downloading ${BAZELISK_VERSION} for ${os}-${arch}..."
+  ensure_dir_exists "${BIN_DIR}"
+
+  # Use curl or wget
+  if command -v curl > /dev/null; then
+    curl -sSL --fail "${download_url}" -o "${BAZELISK_BIN}"
+  elif command -v wget > /dev/null; then
+    wget -qO "${BAZELISK_BIN}" "${download_url}"
+  else
+    echo "Error: Neither curl nor wget found. Please install one to download Bazelisk." >&2
+    exit 1
+  fi
+
+  chmod +x "${BAZELISK_BIN}"
+  echo "Downloaded Bazelisk to ${BAZELISK_BIN}"
+}
+
+# --- Main Logic ---
+
+# Determine which bazelisk binary to use
+TARGET_BAZELISK=""
+
+# 1. Check local cache first
+if [[ -x "${BAZELISK_BIN}" ]]; then
+  TARGET_BAZELISK="${BAZELISK_BIN}"
+# 2. Check PATH if not in local cache
+elif command -v bazelisk > /dev/null; then
+  TARGET_BAZELISK=$(command -v bazelisk)
+  echo "Using system Bazelisk found at: ${TARGET_BAZELISK}"
+# 3. Download if not found anywhere
+else
+  download_bazelisk
+  TARGET_BAZELISK="${BAZELISK_BIN}"
+fi
+
+# Execute the target Bazelisk with all forwarded arguments
+exec "${TARGET_BAZELISK}" "$@"

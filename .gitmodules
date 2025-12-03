@@ -1,3 +1,3 @@
 [submodule "csrc/cutlass"]
-	path = csrc/cutlass
+	path = flash_attn_tf/core/cutlass
 	url = https://github.com/NVIDIA/cutlass.git
