@@ -6,6 +6,17 @@ Please see [Tri Dao's repo](https://github.com/Dao-AILab/flash-attention) for mo
 FlashAttention and FlashAttention-2 are free to use and modify (see LICENSE).
 Please cite (see below) and credit FlashAttention if you use it.
 
+# Docker builder
+
+```
+docker build -t flash-attn-tf-builder \
+  --build-arg UID=$(id -u) \
+  --build-arg GID=$(id -g) \
+  --build-arg USER=$(whoami) \
+  --build-arg GROUP=$(id -gn) \
+  -f docker/Dockerfile.builder .
+```
+
 ## Installation
 
 Requirements:
