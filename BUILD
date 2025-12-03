@@ -5,6 +5,7 @@ sh_binary(
         "MANIFEST.in",
         "requirements.txt",
         "setup.py",
+        "//flash_attn_tf",
     ],
 )
 

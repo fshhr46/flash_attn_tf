@@ -13,7 +13,7 @@ if ! ( is_linux ); then
   exit 1
 fi
 
-PIP_FILE_PREFIX="bazel-bin/build_pip_pkg.runfiles/tf_snap_addons/"
+PIP_FILE_PREFIX="bazel-bin/build_pip_pkg.runfiles/flash_attn_tf/"
 
 function abspath() {
   cd "$(dirname $1)"
@@ -43,7 +43,7 @@ function main() {
   cp ${PIP_FILE_PREFIX}requirements.txt "${TMPDIR}"
   touch ${TMPDIR}/stub.cc
 
-  rsync -avm -L --exclude='*_test.py' ${PIP_FILE_PREFIX}tf_snap_addons "${TMPDIR}"
+  rsync -avm -L --exclude='*_test.py' ${PIP_FILE_PREFIX} "${TMPDIR}"
 
   pushd ${TMPDIR}
   echo $(date) : "=== Building wheel"

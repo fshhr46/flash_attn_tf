@@ -17,6 +17,16 @@ docker build -t flash-attn-tf-builder \
   -f docker/Dockerfile.builder .
 ```
 
+# Building `.whl` from source
+
+1. Make sure your development environment is configured (see above).
+2. Run `./scripts/build_from_source_locally.sh --install` to build the project from source and install the package on
+   your local Python environment. This is recommended during development.
+   
+   Alternatively, you can use Docker to avoid issues with local environment and make sure the built `.whl` matches CI by
+   running `./scripts/build_from_source_docker.sh`.
+
+
 ## Installation
 
 Requirements:
