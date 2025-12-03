@@ -1,0 +1,9 @@
+-r requirements.txt
+tensorflow-datasets==4.9.8
+parameterized==0.9.0
+pytest>=6.2
+pytest-cov>=2.11.1
+pytest-mock>=2.0.0
+pytest-socket>=0.3.0
+pytest-xdist>=2.0
+pytest-retry
