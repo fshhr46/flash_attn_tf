@@ -1,0 +1,16 @@
+FormatStyle: file
+HeaderFilterRegex: "^flash_attn_tf/.*"
+WarningsAsErrors: "*"
+Checks: >-
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-avoid-c-arrays,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+CheckOptions:
+  cppcoreguidelines-avoid-magic-numbers.IgnoredIntegerValues: "1;2;3;4;5;6;7;8;9;10"
+  cppcoreguidelines-avoid-magic-numbers.IgnoredFloatingPointValues: "1000.0"

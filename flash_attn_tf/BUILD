@@ -6,6 +6,6 @@ py_library(
     data = ["py.typed"],
     srcs_version = "PY3",
     deps = [
-        "//flash_attn_tf/python:flash",
+        "//flash_attn_tf/python/op:flash_attn_ops",
     ],
 )

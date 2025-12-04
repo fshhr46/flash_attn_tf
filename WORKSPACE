@@ -311,3 +311,29 @@ http_archive(
         "https://github.com/facebook/zstd/archive/v1.4.4.tar.gz",
     ],
 )
+
+# ================
+# Cutlass setup
+# ================
+
+git_repository(
+    name = "cutlass",
+    commit = "bbe579a9e3beb6ea6626d9227ec32d0dae119a49", # v3.4.1
+    remote = "https://github.com/NVIDIA/cutlass",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "cutlass",
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp",
+        "include/**/*.cuh",
+        "tools/util/include/**/*.h",
+        "tools/util/include/**/*.hpp",
+        "tools/util/include/**/*.cuh",
+    ]),
+    includes = ["include", "tools/util/include"],
+)
+""",
+ )

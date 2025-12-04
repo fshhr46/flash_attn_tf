@@ -8,6 +8,6 @@ custom_op_library(
         "flash_attn/flash_api.cpp",
     ],
     deps = [
-        "@local_config_tf//:tf_header_lib",
+        "@cutlass//:cutlass",
     ],
 )

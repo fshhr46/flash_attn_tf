@@ -12,7 +12,7 @@ BUILDER_CACHE_DIR="/build_cache"
 VENV_DIR="$BUILDER_CACHE_DIR/venv"
 BAZEL_CACHE_DIR="$BUILDER_CACHE_DIR/bazel"
 PIP_CACHE_DIR="$BUILDER_CACHE_DIR/pip"
-ARTIFACTS_DIR="./artifacts"
+ARTIFACTS_DIR="$(pwd)/artifacts"
 
 CLEAN=false
 NO_CLANG_TIDY=false
@@ -54,11 +54,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# if --clean is passed, removes the docker volume used for caching and also forcebly remove the container if it exists
+# if --clean is passed, removes the docker volume used for caching and also forcibly remove the container if it exists
 # before proceeding
 if [[ "$CLEAN" == true ]]; then
   echo "Cleaning up Docker volume '$BUILDER_CACHE_VOLUME'..."
-  docker ps -a --filter volume=flash_attn_tf_builder_cache -q | xargs -r docker rm -f
+  docker ps -a --filter volume="$BUILDER_CACHE_VOLUME" -q | xargs -r docker rm -f
+  docker volume rm "$BUILDER_CACHE_VOLUME" || true
 fi
 
 # Always attempt to build the Docker image. This ensure we have the latest
