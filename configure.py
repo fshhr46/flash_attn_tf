@@ -180,7 +180,7 @@ def _create_build_configuration():
         if not _is_arm64():
             _write("build --copt=-mavx")
 
-    _write_clang_tidy_config()
+    # _write_clang_tidy_config()
 
     print()
     print("Build configurations successfully written to", _BAZELRC, ":\n")

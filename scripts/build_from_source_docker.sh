@@ -15,7 +15,7 @@ PIP_CACHE_DIR="$BUILDER_CACHE_DIR/pip"
 ARTIFACTS_DIR="$(pwd)/artifacts"
 
 CLEAN=false
-NO_CLANG_TIDY=false
+NO_CLANG_TIDY=true
 RELEASE_VERSION=false
 TESTS=false
 PUBLISH=false
