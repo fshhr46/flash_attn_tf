@@ -151,6 +151,15 @@ tf_configure(
     name = "local_config_tf",
 )
 
+
+# =================
+# CUDA setup
+# ================
+load("//build_deps/gpu:cuda_configure.bzl", "cuda_configure")
+
+cuda_configure(name = "local_config_cuda")
+
+
 # ==================
 # Abseil C++ library
 # ==================
