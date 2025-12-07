@@ -33,28 +33,28 @@ py_repositories()
 # LLVM toolchain
 # ==============
 
-http_archive(
-    name = "toolchains_llvm",
-    canonical_id = "v1.4.0",
-    sha256 = "fded02569617d24551a0ad09c0750dc53a3097237157b828a245681f0ae739f8",
-    strip_prefix = "toolchains_llvm-v1.4.0",
-    url = "https://github.com/bazel-contrib/toolchains_llvm/releases/download/v1.4.0/toolchains_llvm-v1.4.0.tar.gz",
-)
-
-load("@toolchains_llvm//toolchain:deps.bzl", "bazel_toolchain_dependencies")
-
-bazel_toolchain_dependencies()
-
-load("@toolchains_llvm//toolchain:rules.bzl", "llvm_toolchain")
-
-llvm_toolchain(
-    name = "llvm_toolchain",
-    llvm_version = "15.0.6",
-)
-
-load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
-
-llvm_register_toolchains()
+# http_archive(
+#     name = "toolchains_llvm",
+#     canonical_id = "v1.4.0",
+#     sha256 = "fded02569617d24551a0ad09c0750dc53a3097237157b828a245681f0ae739f8",
+#     strip_prefix = "toolchains_llvm-v1.4.0",
+#     url = "https://github.com/bazel-contrib/toolchains_llvm/releases/download/v1.4.0/toolchains_llvm-v1.4.0.tar.gz",
+# )
+#
+# load("@toolchains_llvm//toolchain:deps.bzl", "bazel_toolchain_dependencies")
+#
+# bazel_toolchain_dependencies()
+#
+# load("@toolchains_llvm//toolchain:rules.bzl", "llvm_toolchain")
+#
+# llvm_toolchain(
+#     name = "llvm_toolchain",
+#     llvm_version = "15.0.6",
+# )
+#
+# load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
+#
+# llvm_register_toolchains()
 
 # ============
 # Hedron setup
@@ -90,11 +90,11 @@ hedron_compile_commands_setup_transitive_transitive_transitive()
 # clang-tidy setup
 # ================
 
-git_repository(
-    name = "bazel_clang_tidy",
-    commit = "07bc38524e61d9501d772726d6e27cb980db42c7",
-    remote = "https://github.com/erenon/bazel_clang_tidy",
-)
+# git_repository(
+#     name = "bazel_clang_tidy",
+#     commit = "07bc38524e61d9501d772726d6e27cb980db42c7",
+#     remote = "https://github.com/erenon/bazel_clang_tidy",
+# )
 
 # ================
 # TensorFlow setup

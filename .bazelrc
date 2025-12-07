@@ -1,7 +1,7 @@
 common --enable_bzlmod=false
 common --enable_workspace=true
-build --action_env TF_HEADER_DIR="/home/$USER/.local/lib/python3.10/site-packages/tensorflow/include"
-build --action_env TF_SHARED_LIBRARY_DIR="/home/$USER/.local/lib/python3.10/site-packages/tensorflow"
+build --action_env TF_HEADER_DIR="/home/hhuang2/.local/lib/python3.10/site-packages/tensorflow/include"
+build --action_env TF_SHARED_LIBRARY_DIR="/home/hhuang2/.local/lib/python3.10/site-packages/tensorflow"
 build --action_env TF_SHARED_LIBRARY_NAME="libtensorflow_framework.so.2"
 build --action_env TF_CXX11_ABI_FLAG="1"
 build --action_env TF_CXX_STANDARD="c++17"
@@ -11,7 +11,3 @@ build --spawn_strategy=standalone
 build --strategy=Genrule=standalone
 build -c opt
 build --copt=-mavx
-build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
-build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
-build:clang-tidy --@bazel_clang_tidy//:clang_tidy_executable=//:clang_tidy_executable
-build:clang-tidy --output_groups=report
