@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.16.2-gpu
+FROM nvidia/cuda:12.4.1-devel-ubuntu20.04
 
 ARG UID=1000
 ARG GID=1000
