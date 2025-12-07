@@ -4,6 +4,6 @@ try:
     from importlib.metadata import version as _get_version
 
     # derive version from package metadata
-    __version__ = _get_version("flash-attn-tf")
+    __version__ = _get_version("flash_attn_tf")
 except Exception:
     __version__ = "0.1.0"
