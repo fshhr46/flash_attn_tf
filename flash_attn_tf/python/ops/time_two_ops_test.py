@@ -22,11 +22,7 @@ import numpy as np
 from tensorflow.python.framework import ops
 from tensorflow.python.platform import test
 from tensorflow.python.framework import test_util
-try:
-  from tensorflow_time_two.python.ops import time_two_ops
-except ImportError:
-  import time_two_ops
-
+from flash_attn_tf.python.ops import time_two_ops
 
 class TimeTwoTest(test.TestCase):
 
