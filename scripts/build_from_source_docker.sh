@@ -15,6 +15,7 @@ PIP_CACHE_DIR="$BUILDER_CACHE_DIR/pip"
 ARTIFACTS_DIR="$(pwd)/artifacts"
 
 CLEAN=false
+MEMORY_LIMIT=""
 NO_CLANG_TIDY=true
 RELEASE_VERSION=false
 TESTS=false
@@ -47,8 +48,17 @@ while [[ $# -gt 0 ]]; do
       TESTS=true
       shift
       ;;
+    --memory)
+      if [[ -n "${2:-}" ]]; then
+        MEMORY_LIMIT="$2"
+        shift 2
+      else
+        echo "Error: --memory requires a value." >&2
+        exit 1
+      fi
+      ;;
     *)
-      echo "Error: Invalid argument '$1'. Allowed arguments are 'clean', 'no-clang-tidy'." >&2
+      echo "Error: Invalid argument '$1'. Allowed arguments are '--clean', '--no-clang-tidy', '--release-version', '--tests', '--memory'." >&2
       exit 1
       ;;
   esac
@@ -129,6 +139,7 @@ EOS
 # Run the Docker container
 echo "Running Docker container to build..."
 docker run -u $(id -u):$(id -g) --rm --name "$BUILDER_CONTAINER_NAME" \
+  ${MEMORY_LIMIT:+--memory="$MEMORY_LIMIT"} \
   -v "$BUILDER_CACHE_VOLUME":/build_cache \
   -v "$ARTIFACTS_DIR":/workspace/artifacts \
   -w /workspace \
