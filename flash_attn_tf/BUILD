@@ -99,6 +99,7 @@ cc_library(
     srcs = [
         "cc/kernels/flash_bwd_hdim32_bf16_sm80.cu.cc",
         "cc/kernels/flash_fwd_hdim32_bf16_sm80.cu.cc",
+        "cc/kernels/flash_fwd_split_hdim32_bf16_sm80.cu.cc",
     ] + glob([
         "cc/ops/*.cpp",
     ], exclude = [
