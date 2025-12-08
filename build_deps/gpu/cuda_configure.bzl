@@ -536,7 +536,7 @@ def lib_name(base_name, cpu_value, version = None, static = False):
     else:
         auto_configure_fail("Invalid cpu_value: %s" % cpu_value)
 
-def find_lib(repository_ctx, paths, check_soname = True):
+def find_lib(repository_ctx, paths, check_soname = True, fail_if_not_found = True):
     """
       Finds a library among a list of potential paths.
 
@@ -559,11 +559,13 @@ def find_lib(repository_ctx, paths, check_soname = True):
                 mismatches.append(str(path))
                 continue
         return path
-    if mismatches:
-        auto_configure_fail(
-            "None of the libraries match their SONAME: " + ", ".join(mismatches),
-        )
-    auto_configure_fail("No library found under: " + ", ".join(paths))
+    if fail_if_not_found:
+        if mismatches:
+            auto_configure_fail(
+                "None of the libraries match their SONAME: " + ", ".join(mismatches),
+            )
+        auto_configure_fail("No library found under: " + ", ".join(paths))
+    return None
 
 def _find_cuda_lib(
         lib,
@@ -586,10 +588,32 @@ def _find_cuda_lib(
         Returns the path to the library.
       """
     file_name = lib_name(lib, cpu_value, version, static)
+    found = find_lib(
+        repository_ctx,
+        ["%s/%s" % (basedir, file_name)],
+        check_soname = version and not static,
+        fail_if_not_found = False,
+    )
+    if found:
+        return found
+        
+    # Fallback to unversioned if versioned not found (e.g. component version mismatch in CUDA 12)
+    if version and not static:
+         file_name_unversioned = lib_name(lib, cpu_value, None, static)
+         found = find_lib(
+            repository_ctx,
+            ["%s/%s" % (basedir, file_name_unversioned)],
+            check_soname = False,
+            fail_if_not_found = False,
+        )
+         if found:
+            return found
+
     return find_lib(
         repository_ctx,
         ["%s/%s" % (basedir, file_name)],
         check_soname = version and not static,
+        fail_if_not_found = True,
     )
 
 def _find_libs(repository_ctx, cuda_config):
@@ -617,14 +641,14 @@ def _find_libs(repository_ctx, cuda_config):
             repository_ctx,
             cpu_value,
             cuda_config.config["cuda_library_dir"],
-            cuda_config.cuda_version,
+            cuda_config.cuda_lib_version,
         ),
         "cudart_static": _find_cuda_lib(
             "cudart_static",
             repository_ctx,
             cpu_value,
             cuda_config.config["cuda_library_dir"],
-            cuda_config.cuda_version,
+            cuda_config.cuda_lib_version,
             static = True,
         ),
         "cublas": _find_cuda_lib(
@@ -688,7 +712,7 @@ def find_cuda_config(repository_ctx, cuda_libraries):
     """Returns CUDA config dictionary from running find_cuda_config.py"""
     exec_result = repository_ctx.execute([
         _get_python_bin(repository_ctx),
-        repository_ctx.path(Label("//gpu:find_cuda_config.py")),
+        repository_ctx.path(Label("//build_deps/gpu:find_cuda_config.py")),
     ] + cuda_libraries)
     if exec_result.return_code:
         auto_configure_fail("Failed to run find_cuda_config.py: %s" % exec_result.stderr)

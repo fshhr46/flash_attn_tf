@@ -18,7 +18,9 @@ RUN set -eux; \
     curl \
     pkg-config \
     sudo \
-    rsync; \
+    rsync \
+    libcudnn9-dev-cuda-12 \
+    libcudnn9-cuda-12; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 

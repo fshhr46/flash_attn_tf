@@ -176,6 +176,12 @@ def _create_build_configuration():
     _write("build --strategy=Genrule=standalone")
     _write("build -c opt")
 
+    if os.environ.get("TF_NEED_CUDA") == "1":
+        _write("build --action_env TF_NEED_CUDA=1")
+        _write("build --crosstool_top=@local_config_cuda//crosstool:toolchain")
+        _write("build --host_crosstool_top=@local_config_cuda//crosstool:toolchain")
+        _write("build --noincompatible_enable_cc_toolchain_resolution")
+
     if _is_macos() or _is_linux():
         if not _is_arm64():
             _write("build --copt=-mavx")
