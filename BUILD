@@ -5,7 +5,7 @@ sh_binary(
         "MANIFEST.in",
         "requirements.txt",
         "setup.py",
-        "//flash_attn_tf:time_two_py",
+        "//flash_attn_tf:flash_attn_tf_py",
     ],
 )
 
