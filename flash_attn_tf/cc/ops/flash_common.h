@@ -52,7 +52,7 @@ inline std::string Pack(const T& args) {
 template <typename T>
 inline T Unpack(const void* opaque, size_t opaque_len) {
 	T out;
-	CHECK(sizeof(out)==opaque_len, "opaque len");
+	FLASH_CHECK(sizeof(out)==opaque_len, "opaque len");
 	memcpy(&out, opaque, opaque_len);
 	return out;
 }

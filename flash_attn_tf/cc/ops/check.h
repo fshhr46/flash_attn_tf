@@ -9,7 +9,7 @@ inline void check_implementation(bool expr, std::string check_message) {
 	}
 }
 
-#define CHECK(EXPR, MESSAGE)												\
+#define FLASH_CHECK(EXPR, MESSAGE)												\
   do {                                                              \
     const bool __err = EXPR;                                 \
     check_implementation(                                      \

@@ -109,7 +109,7 @@ void set_params_fprop(Flash_fwd_params &params,
     params.p_dropout_in_uint8_t = uint8_t(std::floor(params.p_dropout * 255.0));
     params.rp_dropout = 1.f / params.p_dropout;
     params.scale_softmax_rp_dropout = params.rp_dropout * params.scale_softmax;
-    CHECK(p_dropout < 1.f, "dropout must be <1");
+    FLASH_CHECK(p_dropout < 1.f, "dropout must be <1");
 
     // Causal is the special case where window_size_right == 0 and window_size_left < 0.
     // Local is the more general case where window_size_right >= 0 or window_size_left >= 0.
@@ -190,6 +190,6 @@ void set_params_splitkv(Flash_fwd_params &params, const int batch_size,
             // params.softmax_lseaccum_ptr = softmax_lse_accum.data_ptr();
             // params.oaccum_ptr = out_accum.data_ptr();
         }
-        CHECK(params.num_splits <= 128, "num_splits > 128 not supported");
+        FLASH_CHECK(params.num_splits <= 128, "num_splits > 128 not supported");
     }
 }

@@ -153,7 +153,7 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     bool is_sm8x = major == 8 && minor >= 0;
     bool is_sm80 = major == 8 && minor == 0;
     bool is_sm90 = major == 9 && minor == 0;
-    CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+    FLASH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
     // We will support Turing in the near future
     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
 
@@ -163,7 +163,7 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     // TORCH_CHECK(q_dtype == torch::kFloat16 || q_dtype == torch::kBFloat16,
     //             "FlashAttention only support fp16 and bf16 data type");
     if (q_dtype == BF16) {
-        CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+        FLASH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
     }
 
     // TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
@@ -189,20 +189,20 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     const int head_size = args.d + (8 - head_size_og%8) % 8; //sizes[3];
     const int seqlen_k = args.l_k;
     const int num_heads_k = args.h_k; //k.size(2);
-    CHECK(batch_size > 0, "batch size must be positive");
-    CHECK(head_size % 8 == 0, "head_size should be a multiple of 8");
-    CHECK(head_size <= 256, "FlashAttention backward only supports head dimension at most 256");
+    FLASH_CHECK(batch_size > 0, "batch size must be positive");
+    FLASH_CHECK(head_size % 8 == 0, "head_size should be a multiple of 8");
+    FLASH_CHECK(head_size <= 256, "FlashAttention backward only supports head dimension at most 256");
     if (head_size > 192) {
-        CHECK(is_sm80 || is_sm90, "FlashAttention backward for head dim > 192 requires A100/A800 or H100/H800");
+        FLASH_CHECK(is_sm80 || is_sm90, "FlashAttention backward for head dim > 192 requires A100/A800 or H100/H800");
     }
-    CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
+    FLASH_CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
 
     auto round_multiple = [](int x, int m) { return (x + m - 1) / m * m; };
     const int head_size_rounded = round_multiple(head_size, 32);
     const int seqlen_q_rounded = round_multiple(seqlen_q, 128);
     const int seqlen_k_rounded = round_multiple(seqlen_k, 128);
 
-    CHECK(head_size == round_multiple(head_size_og, 8), "head_size must be head_size_og rounded to a multiple of 8");
+    FLASH_CHECK(head_size == round_multiple(head_size_og, 8), "head_size must be head_size_og rounded to a multiple of 8");
 
     if (window_size_left >= seqlen_k) { window_size_left = -1; }
     if (window_size_right >= seqlen_k) { window_size_right = -1; }
@@ -245,7 +245,7 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     // at::Tensor dout_padded;
 
     // if (head_size_og % 8 != 0) {
-	// 	CHECK(false, "can't pad");
+	// 	FLASH_CHECK(false, "can't pad");
     //     // dout_padded = torch::nn::functional::pad(dout, torch::nn::functional::PadFuncOptions({0, 8 - head_size_og % 8}));
     // } else {
     //     // dout_padded = dout;
@@ -323,7 +323,7 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
 
 	C10_CUDA_CHECK(cudaMalloc((void**)&params.rng_state, 2 * 8)); // 2 * float64
     if (is_dropout)  {
-		CHECK(false, "don't support dropout yet");
+		FLASH_CHECK(false, "don't support dropout yet");
     }
 
     // auto gen = at::get_generator_or_default<at::CUDAGeneratorImpl>(
@@ -358,7 +358,7 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     if (seqlen_q > 0) {
         launch(params, stream);
     } else {
-		CHECK(false, "seqlen_q == 0");
+		FLASH_CHECK(false, "seqlen_q == 0");
         // If seqlen_q == 0, then we have an empty tensor. We need to set the output to 0.
         // dk_expanded.zero_();
         // dv_expanded.zero_();
@@ -381,12 +381,12 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
 
     // For MQA/GQA we need to sum dK and dV across the groups
     if (num_heads_k != num_heads) {
-		// CHECK(false, "don't handle MQA yet");
+		// FLASH_CHECK(false, "don't handle MQA yet");
         // at::sum_out(dk, at::reshape(dk_expanded, {batch_size, seqlen_k, num_heads_k, num_heads / num_heads_k, head_size}), {3});
         // at::sum_out(dv, at::reshape(dv_expanded, {batch_size, seqlen_k, num_heads_k, num_heads / num_heads_k, head_size}), {3});
     }
     // if (head_size_og % 8 != 0) {
-	// 	CHECK(false, "can't slice");
+	// 	FLASH_CHECK(false, "can't slice");
     //     // dq = dq.index({"...", torch::indexing::Slice(torch::indexing::None, head_size_og)});
     //     // dk = dk.index({"...", torch::indexing::Slice(torch::indexing::None, head_size_og)});
     //     // dv = dv.index({"...", torch::indexing::Slice(torch::indexing::None, head_size_og)});

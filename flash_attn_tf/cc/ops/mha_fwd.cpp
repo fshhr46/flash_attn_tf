@@ -58,13 +58,13 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     // bool is_sm75 = dprops->major == 7 && dprops->minor == 5;
     bool is_sm8x = major == 8 && minor >= 0;
     bool is_sm90 = major == 9 && minor == 0;
-    CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
+    FLASH_CHECK(is_sm90 || is_sm8x, "FlashAttention only supports Ampere GPUs or newer.");
     // We will support Turing in the near future
     // TORCH_CHECK(is_sm90 || is_sm8x || is_sm75, "FlashAttention only supports Turing GPUs or newer.");
 
-    CHECK(args.dtype == FP16 || args.dtype == BF16, "FlashAttention only support fp16 and bf16 data type");
+    FLASH_CHECK(args.dtype == FP16 || args.dtype == BF16, "FlashAttention only support fp16 and bf16 data type");
     if (args.dtype == BF16) {
-        CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
+        FLASH_CHECK(is_sm90 || is_sm8x, "bfloat16 is only supported on Ampere GPUs or newer");
     }
     // TORCH_CHECK(k.dtype() == q_dtype, "query and key must have the same dtype");
     // TORCH_CHECK(v.dtype() == q_dtype, "query and value must have the same dtype");
@@ -83,9 +83,9 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     const int head_size_og = args.d;
     const int seqlen_k = args.l_k;
     const int num_heads_k = args.h_k;
-    CHECK(batch_size > 0, "batch size must be postive");
-    CHECK(head_size_og <= 256, "FlashAttention forward only supports head dimension at most 256");
-    CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
+    FLASH_CHECK(batch_size > 0, "batch size must be postive");
+    FLASH_CHECK(head_size_og <= 256, "FlashAttention forward only supports head dimension at most 256");
+    FLASH_CHECK(num_heads % num_heads_k == 0, "Number of heads in key/value must divide number of heads in query");
 
     if (args.window_size_left >= seqlen_k) { args.window_size_left = -1; }
     if (args.window_size_right >= seqlen_k) { args.window_size_right = -1; }
@@ -115,7 +115,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     // at::Tensor q_padded, k_padded, v_padded;
 	void *q_padded=q, *k_padded=k, *v_padded=v;
     // if (head_size_og % 8 != 0) {
-	// 	// CHECK(false, "can't pad");
+	// 	// FLASH_CHECK(false, "can't pad");
     //     // q_padded = torch::nn::functional::pad(q, torch::nn::functional::PadFuncOptions({0, 8 - head_size_og % 8}));
     //     // k_padded = torch::nn::functional::pad(k, torch::nn::functional::PadFuncOptions({0, 8 - head_size_og % 8}));
     //     // v_padded = torch::nn::functional::pad(v, torch::nn::functional::PadFuncOptions({0, 8 - head_size_og % 8}));
@@ -155,7 +155,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     // // at::Tensor p;
     // // Only return softmax if there's dropout to reduce compilation time
     if (args.return_softmax) {
-		CHECK(false, "no return softmax");
+		FLASH_CHECK(false, "no return softmax");
         // TORCH_CHECK(p_dropout > 0.0f, "return_softmax is only supported when p_dropout > 0.0");
         // p = torch::empty({ batch_size, num_heads, seqlen_q_rounded, seqlen_k_rounded }, opts);
     }
@@ -202,7 +202,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
         // // See Note [Acquire lock when using random generators]
         // std::lock_guard<std::mutex> lock(gen->mutex_);
         // params.philox_args = gen->philox_cuda_state(counter_offset);
-		CHECK(false, "don't support dropout yet");
+		FLASH_CHECK(false, "don't support dropout yet");
 		// params.philox_args = {{0}, 0};
     }
 
@@ -225,7 +225,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
 		// C10_CUDA_CHECK(cudaStreamSynchronize(stream));
 		// C10_CUDA_CHECK(cudaDeviceSynchronize());
     } else {
-		CHECK(false, "seqlen_k is zero");
+		FLASH_CHECK(false, "seqlen_k is zero");
         // If seqlen_k == 0, then we have an empty tensor. We need to set the output to 0.
         // out.zero_();
         // softmax_lse.fill_(std::numeric_limits<float>::infinity());
