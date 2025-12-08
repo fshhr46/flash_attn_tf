@@ -99,7 +99,7 @@ cc_library(
     srcs = [
         "cc/kernels/flash_bwd_hdim32_bf16_sm80.cu.cc",
         "cc/kernels/flash_fwd_hdim32_bf16_sm80.cu.cc",
-        "cc/kernels/flash_fwd_split_hdim32_bf16_sm80.cu.cc",
+        "cc/kernels/flash_ops.cc",
     ] + glob([
         "cc/ops/*.cpp",
     ], exclude = [
@@ -132,7 +132,7 @@ cc_library(
 cc_binary(
     name = "python/ops/_flash_attn_ops.so",
     srcs = [
-        "cc/kernels/flash_bwd_hdim32_bf16_sm80.cc",
+        "cc/kernels/flash_ops.cc",
         "cc/ops/flash_common.h",
         "cc/ops/mha_fwd.h",
         "cc/ops/mha_bwd.h",
