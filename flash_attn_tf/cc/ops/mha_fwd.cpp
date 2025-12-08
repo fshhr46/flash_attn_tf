@@ -100,7 +100,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     // Faster to transpose q from (b, 1, (nheads_kv ngroups), d) to (b, ngroups, nheads_kv, d) in this case
     // H/t Daniel Haziza
     // const int seqlenq_ngroups_swapped = seqlen_q == 1 && num_heads > num_heads_k && window_size_left < 0 && window_size_right < 0 && p_dropout == 0.f && head_size_og % 8 == 0 && !has_alibi;
-	const int seqlenq_ngroups_swapped = false;
+	// const int seqlenq_ngroups_swapped = false;
     // if (seqlenq_ngroups_swapped) {
     //     const int ngroups = num_heads / num_heads_k;
     //     q = q.reshape({batch_size, num_heads_k, ngroups, head_size_og}).transpose(1, 2);
@@ -189,7 +189,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     // number of times random will be generated per thread, to offset philox counter in thc random
     // state
     // We use a custom RNG that increases the offset by batch_size * nheads * 32.
-    int64_t counter_offset = params.b * params.h * 32;
+    // int64_t counter_offset = params.b * params.h * 32;
 	C10_CUDA_CHECK(cudaMalloc((void**)&params.rng_state, 2 * 8)); // 2 * float64
     // auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA);
     // auto rng_state = torch::empty({2}, options.dtype(torch::kInt64));

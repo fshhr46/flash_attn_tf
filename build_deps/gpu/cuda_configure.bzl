@@ -1163,7 +1163,11 @@ def _create_local_cuda_repository(repository_ctx):
         host_compiler_includes + _cuda_include_path(
             repository_ctx,
             cuda_config,
-        ) + [cupti_header_dir, cudnn_header_dir],
+        ) + [cupti_header_dir, cudnn_header_dir] + [
+            "/usr/include",
+            "/usr/lib/gcc",
+            "/usr/local/include",
+        ],
     )
 
     # For gcc, do not canonicalize system header paths; some versions of gcc
