@@ -57,7 +57,7 @@ REGISTER_OP("FlashMHABwd")
         // dv same shape as v (which is same as k usually)
         c->set_output(2, v_shape);
 
-        return Status::OK();
+        return absl::OkStatus();
     });
 
 template <typename T>

@@ -44,7 +44,7 @@ REGISTER_OP("FlashMHAFwd")
 
         c->set_output(1, c->MakeShape({batch_size, nheads, seqlen_q}));
 
-        return Status::OK();
+        return absl::OkStatus();
     })
     .Doc(R"doc(
 FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.
