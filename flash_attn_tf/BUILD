@@ -84,12 +84,11 @@ py_test(
 cc_library(
     name = "flash_attn_ops_gpu",
     srcs = glob([
-        "cc/kernels/*.cu",
+        "cc/kernels/*.cu.cc",
         "cc/ops/*.cpp",
     ], exclude = [
-        "cc/ops/flash_api.cpp",
-        "cc/ops/time_two_ops.cc",
         "cc/kernels/time_two*",
+        "cc/ops/time_two*",
     ]),
     hdrs = glob([
         "cc/kernels/*.h",
@@ -102,7 +101,11 @@ cc_library(
     deps = [
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
-    ] + if_cuda_is_configured([":cuda", "@local_config_cuda//cuda:cuda_headers"]),
+    ] + if_cuda_is_configured([
+        ":cuda",
+        "@local_config_cuda//cuda:cuda_headers",
+        "@cutlass//:cutlass"
+    ]),
     alwayslink = 1,
     copts = select({
         "//conditions:default": ["-pthread", "-std=c++17", "-D_GLIBCXX_USE_CXX11_ABI=1"],
