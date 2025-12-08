@@ -85,14 +85,18 @@ cc_library(
     name = "flash_attn_ops_gpu",
     srcs = glob([
         "cc/kernels/*.cu",
-        "cc/kernels/*.h",
-        "cc/kernels/*.cuh",
-        "cc/ops/*.h",
         "cc/ops/*.cpp",
     ], exclude = [
         "cc/ops/flash_api.cpp",
         "cc/ops/time_two_ops.cc",
         "cc/kernels/time_two*",
+    ]),
+    hdrs = glob([
+        "cc/kernels/*.h",
+        "cc/kernels/*.cuh",
+        "cc/ops/*.h",
+    ], exclude = [
+        "cc/kernels/time_two.h",
     ]),
     includes = ["cc/kernels", "cc/ops"],
     deps = [
