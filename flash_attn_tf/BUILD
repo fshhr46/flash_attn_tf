@@ -96,8 +96,10 @@ cc_library(
 
 cc_library(
     name = "flash_attn_ops_gpu",
-    srcs = glob([
-        "cc/kernels/*.cu.cc",
+    srcs = [
+        "cc/kernels/flash_bwd_hdim32_bf16_sm80.cu.cc",
+        "cc/kernels/flash_fwd_hdim32_bf16_sm80.cu.cc",
+    ] + glob([
         "cc/ops/*.cpp",
     ], exclude = [
         "cc/kernels/time_two*",
