@@ -14,11 +14,11 @@ toolchain {
   toolchain_identifier: "local_linux"
 
   feature {
-    name: "c++11"
+    name: "c++17"
     flag_set {
       action: "c++-compile"
       flag_group {
-        flag: "-std=c++11"
+        flag: "-std=c++17"
       }
     }
   }
@@ -192,7 +192,7 @@ toolchain {
   feature {
     name: "common"
     implies: "stdlib"
-    implies: "c++11"
+    implies: "c++17"
     implies: "determinism"
     implies: "alwayslink"
     implies: "hardening"
@@ -287,11 +287,11 @@ toolchain {
   target_system_name: "local"
   toolchain_identifier: "local_darwin"
   feature {
-    name: "c++11"
+    name: "c++17"
     flag_set {
       action: "c++-compile"
       flag_group {
-        flag: "-std=c++11"
+        flag: "-std=c++17"
       }
     }
   }
@@ -443,7 +443,7 @@ toolchain {
   feature {
     name: "common"
     implies: "stdlib"
-    implies: "c++11"
+    implies: "c++17"
     implies: "determinism"
     implies: "hardening"
     implies: "warnings"

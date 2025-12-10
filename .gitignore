@@ -9,6 +9,7 @@ __pycache__/
 
 # Distribution / packaging
 bin/
+!build_deps/gpu/crosstool/clang/bin/
 build/
 develop-eggs/
 dist/
