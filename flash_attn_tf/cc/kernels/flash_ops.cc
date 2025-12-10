@@ -126,11 +126,37 @@ class FlashMHAFwdOp : public OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("FlashMHAFwd").Device(DEVICE_GPU).TypeConstraint<Eigen::half>("T"),
+    Name("FlashMHAFwd").Device(DEVICE_GPU).TypeConstraint<Eigen::half>("T")
+        .HostMemory("softmax_scale")
+        .HostMemory("is_causal")
+        .HostMemory("window_size_left")
+        .HostMemory("window_size_right")
+        .HostMemory("return_softmax")
+        .HostMemory("n")
+        .HostMemory("l")
+        .HostMemory("h")
+        .HostMemory("d")
+        .HostMemory("l_k")
+        .HostMemory("h_k")
+        .HostMemory("dtype")
+        .HostMemory("seed"),
     FlashMHAFwdOp<Eigen::half>);
 
 REGISTER_KERNEL_BUILDER(
-    Name("FlashMHAFwd").Device(DEVICE_GPU).TypeConstraint<bfloat16>("T"),
+    Name("FlashMHAFwd").Device(DEVICE_GPU).TypeConstraint<bfloat16>("T")
+        .HostMemory("softmax_scale")
+        .HostMemory("is_causal")
+        .HostMemory("window_size_left")
+        .HostMemory("window_size_right")
+        .HostMemory("return_softmax")
+        .HostMemory("n")
+        .HostMemory("l")
+        .HostMemory("h")
+        .HostMemory("d")
+        .HostMemory("l_k")
+        .HostMemory("h_k")
+        .HostMemory("dtype")
+        .HostMemory("seed"),
     FlashMHAFwdOp<bfloat16>);
 
 REGISTER_OP("FlashMHABwd")
@@ -267,9 +293,35 @@ class FlashMHABwdOp : public OpKernel {
 };
 
 REGISTER_KERNEL_BUILDER(
-    Name("FlashMHABwd").Device(DEVICE_GPU).TypeConstraint<Eigen::half>("T"),
+    Name("FlashMHABwd").Device(DEVICE_GPU).TypeConstraint<Eigen::half>("T")
+        .HostMemory("p_dropout")
+        .HostMemory("softmax_scale")
+        .HostMemory("is_causal")
+        .HostMemory("window_size_left")
+        .HostMemory("window_size_right")
+        .HostMemory("deterministic")
+        .HostMemory("n")
+        .HostMemory("l")
+        .HostMemory("h")
+        .HostMemory("d")
+        .HostMemory("l_k")
+        .HostMemory("h_k")
+        .HostMemory("seed"),
     FlashMHABwdOp<Eigen::half>);
 
 REGISTER_KERNEL_BUILDER(
-    Name("FlashMHABwd").Device(DEVICE_GPU).TypeConstraint<bfloat16>("T"),
+    Name("FlashMHABwd").Device(DEVICE_GPU).TypeConstraint<bfloat16>("T")
+        .HostMemory("p_dropout")
+        .HostMemory("softmax_scale")
+        .HostMemory("is_causal")
+        .HostMemory("window_size_left")
+        .HostMemory("window_size_right")
+        .HostMemory("deterministic")
+        .HostMemory("n")
+        .HostMemory("l")
+        .HostMemory("h")
+        .HostMemory("d")
+        .HostMemory("l_k")
+        .HostMemory("h_k")
+        .HostMemory("seed"),
     FlashMHABwdOp<bfloat16>);
