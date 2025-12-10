@@ -324,43 +324,6 @@ __forceinline__ __device__ void copy(TiledCopy tiled_copy, cute::Tensor<Engine0,
             cute::clear(D(_, m, _));
         }
     }
-    // TD [2023-04-13]: Strange that the code below can cause race condition.
-    // I think it's because the copies are under an if statement.
-    // if (Is_even_K) {
-    //     #pragma unroll
-    //     for (int m = 0; m < cute::size<1>(S); ++m) {
-    //         if (Is_even_MN || cute::get<0>(identity_MN(0, m, 0)) < max_MN) {
-    //             copy(tiled_copy, S(_, m, _), D(_, m, _));
-    //         } else if (Clear_OOB_MN) {
-    //             clear(D(_, m, _));
-    //         }
-    //     }
-    // } else {  // It's slightly faster in this case if iterate over K first
-    //     #pragma unroll
-    //     for (int k = 0; k < cute::size<2>(S); ++k) {
-    //         if (predicate_K(k)) {
-    //             #pragma unroll
-    //             for (int m = 0; m < cute::size<1>(S); ++m) {
-    //                 if (Is_even_MN || cute::get<0>(identity_MN(0, m, 0)) < max_MN) {
-    //                     copy(tiled_copy, S(_, m, k), D(_, m, k));
-    //                 } else if (Clear_OOB_MN) {
-    //                     clear(D(_, m, k));
-    //                 }
-    //             }
-    //         } else if (Clear_OOB_K) {  // There's no case where !Clear_OOB_K && Clear_OOB_MN
-    //             if (Clear_OOB_MN || Is_even_MN) {
-    //                 clear(D(_, _, k));
-    //             } else {
-    //                 #pragma unroll
-    //                 for (int m = 0; m < cute::size<1>(S); ++m) {
-    //                     if (!(Is_even_MN || cute::get<0>(identity_MN(0, m, 0)) < max_MN)) {
-    //                         clear(D(_, m, k));
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,12 +340,9 @@ __forceinline__ __device__ void copy_w_min_idx(cute::Tensor<Engine0, Layout0> co
     CUTE_STATIC_ASSERT_V(cute::size<0>(S) == cute::size<0>(D));                     // MMA
     CUTE_STATIC_ASSERT_V(cute::size<1>(S) == cute::size<1>(D));                     // MMA_M
     CUTE_STATIC_ASSERT_V(cute::size<2>(S) == cute::size<2>(D));                     // MMA_K
-    // if (threadIdx.x == 0 && blockIdx.z == 0) { printf("blockIdx.y = %d, max_MN = %d, min_MN = %d\n", blockIdx.y, max_MN, min_MN); }
     #pragma unroll
     for (int m = 0; m < cute::size<1>(S); ++m) {
-        // if (threadIdx.x == 0 && blockIdx.z == 0) { printf("blockIdx.y = %d, m = %d\n", blockIdx.y, cute::get<0>(identity_MN(0, m, 0))); }
         if (cute::get<0>(identity_MN(0, m, 0)) >= min_MN && cute::get<0>(identity_MN(0, m, 0)) < max_MN) {
-            // if (threadIdx.x == 0 && blockIdx.z == 0) { printf("Inner loop, blockIdx.y = %d, m = %d\n", blockIdx.y, cute::get<0>(identity_MN(0, m, 0))); }
             #pragma unroll
             for (int k = 0; k < cute::size<2>(S); ++k) {
                 if (Is_even_K || predicate_K(k)) {

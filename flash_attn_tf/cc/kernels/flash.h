@@ -7,14 +7,6 @@
 #include <cuda.h>
 #include <vector>
 
-// #ifdef OLD_GENERATOR_PATH
-// #include <ATen/CUDAGeneratorImpl.h>
-// #else
-// #include <ATen/cuda/CUDAGeneratorImpl.h>
-// #endif
-
-// #include <ATen/cuda/CUDAGraphsUtils.cuh> // For at::cuda::philox::unpack
-
 constexpr int TOTAL_DIM = 0;
 constexpr int H_DIM = 1;
 constexpr int D_DIM = 2;
@@ -116,8 +108,6 @@ struct Flash_fwd_params : public Qkv_params {
 
     // The dropout probability (probability of keeping an activation).
     float p_dropout;
-    // uint32_t p_dropout_in_uint;
-    // uint16_t p_dropout_in_uint16_t;
     uint8_t p_dropout_in_uint8_t;
 
     // Scale factor of 1 / (1 - p_dropout).
@@ -162,10 +152,6 @@ struct Flash_bwd_params : public Flash_fwd_params {
     void *__restrict__ dq_accum_ptr;
     void *__restrict__ dk_accum_ptr;
     void *__restrict__ dv_accum_ptr;
-
-    // // To accumulate dK and dV in case we're splitting the bwd along seqlen_q
-    // dimension void *__restrict__ dk_accum_ptr; void *__restrict__
-    // dv_accum_ptr;
 
     // The stride between rows of the dO, dQ, dK and dV matrices.
     // TD [2022-04-16]: We're using 32-bit indexing to save registers.

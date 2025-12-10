@@ -40,14 +40,9 @@ make_tiled_copy_B_warpcontiguousN(Copy_Atom<Args...> const& copy_atom,
     constexpr int kNWarpsN = TileShape_N / AtomShape_N / 2;
     constexpr int MMAStride_N = MMA_N * AtomShape_N * 2;
     // This gives the correct layout, idk why.
-    // auto t = make_tile(Layout<Shape<Shape<_8, _2>, _2>,
-    //                           Stride<Stride<_1, _64>, _8> >{},
-    // auto t = make_tile(Layout<Shape<_8, _2, _2>,
-    //                           Stride<_1, _64, _8> >{},
     auto t = make_tile(Layout<Shape<Int<AtomShape_N>, Int<kNWarpsN>, _2>,   // (8, 2, 2) or (8, 4, 2)
                               Stride<_1, Int<MMAStride_N>, _8> >{},       // (1, 64, 8) or (1, 32, 8)
                        make_layout(Int<TileShape_K>{}));
-    // if (cute::thread0()) {printf("make_tiled_copy_B_warpcontiguousN "); print(t); printf("\n");  }
     return make_tiled_copy_impl(copy_atom, tiled_mma.get_layoutB_TV(), t);
 }
 
@@ -70,7 +65,6 @@ make_tiled_copy_C_warpcontiguousN(Copy_Atom<Args...> const& copy_atom,
     auto t = make_tile(make_layout(Int<TileShape_M>{}),
                        Layout<Shape<Int<AtomShape_N>, Int<kNWarpsN>, _2>,   // (8, 2, 2) or (8, 4, 2)
                               Stride<_1, Int<MMAStride_N>, _8> >{});       // (1, 64, 8) or (1, 32, 8)
-    // if (cute::thread0()) {printf("make_tiled_copy_C_warpcontiguousN "); print(t); printf("\n");  }
     return make_tiled_copy_impl(copy_atom, tiled_mma.get_layoutC_TV(), t);
 }
 
@@ -205,11 +199,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
     Tensor tdQsdQ = gmem_thr_copy_dQ.partition_S(sdQ);    // ((Atom,AtomNum),ATOM_M,ATOM_N)
     Tensor tdQgdQ = gmem_thr_copy_dQ.partition_D(gdQ);
     Tensor tdQgdQaccum = gmem_thr_copy_dQaccum.partition_D(gdQaccum);
-    // if (cute::thread0()) { print(tdQgdQaccum.layout()); printf("\n"); }
-    // __syncthreads();
-    // if (blockIdx.x == 0 && blockIdx.y == 0 && blockIdx.z == 0 && tidx < 64) {
-    //     printf("tidx = %d, tdQgdQaccum = 0x%p\n", tidx, tdQgdQaccum.data());
-    // }
 
     typename Kernel_traits::TiledMmaSdP tiled_mma_sdp;
     auto thr_mma_sdp = tiled_mma_sdp.get_thread_slice(tidx);
@@ -246,8 +235,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
     auto smem_tiled_copy_KV = make_tiled_copy_B_warpcontiguousN<MMA_N_SdP>(typename Kernel_traits::SmemCopyAtom{}, tiled_mma_sdp);
     auto smem_thr_copy_KV = smem_tiled_copy_KV.get_thread_slice(tidx);
     Tensor tSsK = smem_thr_copy_KV.partition_S(sK);
-    // if (cute::thread(0, 0) && n_block == 0) { printf("sK layout: "); print(sK.layout()); printf("\n"); }
-    // if (cute::thread(0, 0) && n_block == 0) { print(tSsK.layout()); printf("\n"); }
     Tensor tdPsV = smem_thr_copy_KV.partition_S(sV);
 
     // Partition sP and sdS to match the accumulator partitioning
@@ -256,11 +243,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
     auto smem_tiled_copy_PdS = make_tiled_copy_C_warpcontiguousN<MMA_N_SdP>(typename Kernel_traits::SmemCopyAtomPdS{}, tiled_mma_sdp);
     auto smem_thr_copy_PdS = smem_tiled_copy_PdS.get_thread_slice(tidx);
     Tensor tPsP = smem_thr_copy_PdS.partition_D(sP);      // ((Atom,AtomNum),PIPE_M,PIPE_N)
-    // if (cute::thread(0, 0) && n_block == 0) { printf("sP layout: "); print(sP.layout()); printf("\n"); }
-    // if (cute::thread(0, 0) && n_block == 0) { print(tPsP.layout()); printf("\n"); }
-    // if (n_block == 0 && blockIdx.x == 0 && blockIdx.y == 0 && tidx < 64) {
-    //     printf("tidx=%d, tPsP = 0x%p\n", tidx, tPsP.data());
-    // }
     Tensor tdSsdS = smem_thr_copy_PdS.partition_D(sdS);   // ((Atom,AtomNum),PIPE_M,PIPE_N)
 
     auto smem_tiled_copy_PdSt = make_tiled_copy_A(typename Kernel_traits::SmemCopyAtomTransposed{}, tiled_mma_dkv);
@@ -413,11 +395,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
     // with V (which would be zero), we're fine. However, with ALiBi, we might modify these
     // scores, and probs can become NaN. Instead if we set LSE = inf for OOB rows, probs are always 0.
 
-    // Tensor tKrK = make_fragment_like(tKsK);
-    // // cute::copy(gmem_tiled_copy_QKV, tKgK(_, _, _, 0), tKrK);
-    // cute::copy(gmem_tiled_copy_QKV, tKgK, tKrK);
-    // // if (cute::thread(1, 0)) { print(tKrK); }
-
     flash::copy<Is_even_MN, Is_even_K, /*Clear_OOB_MN=*/true>(
         gmem_tiled_copy_QKV, tKgK, tKsK, tKVcKV, tKVpKV, binfo.actual_seqlen_k - n_block * kBlockN
     );
@@ -428,7 +405,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
     }
     flash::cp_async_fence();
 
-    // if (cute::thread0()) { print(tdOgdO.layout()); printf("\n"); print(tdOrdO); print(tdOrO); }
     if (Is_first) {
         cute::copy(tdOrdO, tdOsdO);
         dot_do_o<Kernel_traits::kGmemThreadsPerRow>(tdOrdO, tdOrO, gdPsum,
@@ -462,19 +438,11 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
         #pragma unroll
         for (int mi = 0; mi < size(lse); ++mi) { dP_sum(mi) = gdPsum(get<0>(taccScS_row(mi))); }
 
-        // if (cute::thread0()) { print(sK); }
-        // Tensor tSrK_copy_view = smem_thr_copy_KV.retile_D(tSrK);
-        // #pragma unroll
-        // for (int k = 0; k < size<2>(tSrK_copy_view); ++k) {
-        //     cute::copy(smem_tiled_copy_KV, tSsK(_, _, k), tSrK_copy_view(_, _, k));
-        // }
-        // if (cute::thread0()) { print(tSrK); }
         flash::gemm(acc_s, tSrQ, tSrK, tSsQ, tSsK, tiled_mma_sdp,
                     smem_tiled_copy_QdO, smem_tiled_copy_KV, smem_thr_copy_QdO, smem_thr_copy_KV);
 
         // Reshape acc_s from (MMA=4, MMA_N, MMA_N) to (col=(2, MMA_N), row=(2, MMA_N))
         Tensor scores = make_tensor(acc_s.data(), flash::convert_layout_acc_rowcol(acc_s.layout()));
-        // if (cute::thread(32, 0)) { print(scores); }
 
         if (Has_alibi) {
             alibi.apply_alibi(scores, n_block * kBlockN + (tidx / 32 / AtomLayoutMS) * MMA_N_SdP * 16,
@@ -503,7 +471,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
                 flash::apply_mask_causal(scores, n_block * kBlockN + (tidx / 32 / AtomLayoutMS) * MMA_N_SdP * 16,
                                          binfo.actual_seqlen_k, m_block * kBlockM + get<0>(taccScS_row(0)),
                                          binfo.actual_seqlen_q,
-                                         // binfo.actual_seqlen_k, m_block * kBlockM + (tidx / 32) % AtomLayoutMS * 16 + (tidx % 32) / 4,
                                          AtomLayoutMS * 16);
             }
         } else if (Is_local) {
@@ -518,7 +485,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
 
         }
 
-        // if (cute::thread(32, 0)) { print(scores); }
         // Compute the exponential value.
         flash::scale_apply_exp2</*scale_max=*/false>(scores, lse, params.scale_softmax_log2);
         if constexpr (Is_dropout) {
@@ -540,9 +506,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
         Tensor tPrP = make_tensor(rP.data(), flash::convert_layout_acc_Aregs<Kernel_traits::TiledMmaSdP>(rP.layout()));
         Tensor tPaP = smem_thr_copy_PdS.retile_S(tPrP);     // ((Atom,AtomNum), MMA_N, MMA_N)
         cute::copy(smem_tiled_copy_PdS, tPaP, tPsP);
-        // if (cute::thread0()) { print(tPaP); }
-        // __syncthreads();
-        // if (cute::thread0()) { print(sP); }
 
         Tensor acc_dp = partition_fragment_C(tiled_mma_sdp, Shape<Int<kBlockM>, Int<kBlockN>>{});  // (MMA=4, MMA_N, MMA_N)
         CUTE_STATIC_ASSERT_V(size<0>(acc_dp) == size<0>(acc_s));                     // MMA
@@ -550,16 +513,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
         CUTE_STATIC_ASSERT_V(size<2>(acc_dp) == size<2>(acc_s));                     // MMA
 
         clear(acc_dp);
-        // Tensor acc_dp_reshaped = make_tensor(acc_dp.data(), flash::convert_layout_acc_rowcol(acc_dp.layout()));
-        // #pragma unroll
-        // for (int mi = 0; mi < size<0>(acc_dp_reshaped); ++mi) {
-        //     #pragma unroll
-        //     for (int ni = 0; ni < size<1>(acc_dp_reshaped); ++ni) {
-        //         acc_dp_reshaped(mi, ni) = -dP_sum(mi);
-        //     }
-        // }
-
-        // if (cute::thread0()) { print(dP_sum); }
 
         flash::gemm</*A_in_regs=*/false, /*B_in_regs=*/Kernel_traits::Is_V_in_regs>(
             acc_dp, tdPrdO, tdPrV, tdPsdO, tdPsV, tiled_mma_sdp,
@@ -578,7 +531,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
                 dS(mi, ni) = pointwise_mult(scores(mi, ni), dS(mi, ni), dP_sum(mi));
             }
         }
-        // if (cute::thread0()) { print(dS); }
 
         Tensor acc_dq = partition_fragment_C(tiled_mma_dq, Shape<Int<kBlockM>, Int<kHeadDim>>{});  // MMA, MMA_N, MMA_K
         tdQgdQaccum.data() = tdQgdQaccum.data() + (-int(kBlockM * params.h * params.d_rounded));
@@ -607,20 +559,12 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
         Tensor dS_reshaped = make_tensor(dS.data(), acc_dp.layout());
         // Convert dS from fp32 to fp16
         Tensor tdSrdS = flash::convert_type<Element>(dS_reshaped);
-        // if (cute::thread0()) { print(tPrP); }
         Tensor tdSadS = smem_thr_copy_PdS.retile_S(tdSrdS);                                          // ((Atom,AtomNum), MMA_N, MMA_N)
         cute::copy(smem_tiled_copy_PdS, tdSadS, tdSsdS);
         __syncthreads();
 
-        // Layout p_l = tPrP.layout();
-        // Tensor tdVrPt = make_tensor(tPrP.data(), make_layout(get<0>(p_l), get<2>(p_l), get<1>(p_l)));
-        // flash::gemm_rs(acc_dv, tdVrPt, tdVrdO, tdVsdOt, tiled_mma_dkv, smem_thr_copy_QdOt);
-        // Tensor tdKrdSt = make_tensor(tdSrdS.data(), tdVrPt.layout());
-        // flash::gemm_rs(acc_dk, tdKrdSt, tdKrQt, tdKsQt, tiled_mma_dkv, smem_thr_copy_QdOt);
         flash::gemm(acc_dv, tdVrPt, tdVrdO, tdVsPt, tdVsdOt, tiled_mma_dkv,
                     smem_tiled_copy_PdSt, smem_tiled_copy_QdOt, smem_thr_copy_PdSt, smem_thr_copy_QdOt);
-        // if (cute::thread0() && n_block == 0 && m_block == 0) { print(tdVrPt); }
-        // if (cute::thread0()) { print(acc_dv); }
 
         __syncthreads(); // Need syncthreads since we're writing to the same sdO location
 
@@ -639,7 +583,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
 
         flash::gemm(acc_dq, tdQrdS, tdQrKt, tdQsdS, tdQsKt, tiled_mma_dq,
                     smem_tiled_copy_dS, smem_tiled_copy_Kt, smem_thr_copy_dS, smem_thr_copy_Kt);
-        // if (cute::thread0()) { print(acc_dq); }
 
         if (m_block > m_block_min) {
             gLSE.data() = gLSE.data() + (-int(kBlockM));
@@ -657,7 +600,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
             if (!Seq_parallel) {
                 cute::copy(gmem_tiled_copy_dQaccum, acc_dq_reshaped, tdQgdQaccum);
             } else {
-                // if (cute::thread0()) { print(acc_dq.layout()); printf("\n"); print(acc_dq_reshaped.layout()); printf("\n"); print(tdQgdQaccum.layout()); printf("\n"); }
                 CUTE_STATIC_ASSERT_V(size(acc_dq) == size(tdQgdQaccum));
                 #pragma unroll
                 for (int i = 0; i < size(acc_dq); ++i) { atomicAdd(&tdQgdQaccum(i), acc_dq(i)); }
@@ -673,7 +615,6 @@ inline __device__ void compute_dq_dk_dv_1colblock(const Params &params, const in
 
         flash::gemm(acc_dk, tdKrdSt, tdKrQt, tdKsdSt, tdKsQt, tiled_mma_dkv,
                     smem_tiled_copy_PdSt, smem_tiled_copy_QdOt, smem_thr_copy_PdSt, smem_thr_copy_QdOt);
-        // if (cute::thread0()) { print(acc_dk); }
         if (Double_buffer) {  // Double buffer for sQ
             tdKsQt.data() = tdKsQt.data() + (m_block % 2 == 0 ? size(sQ) : -size(sQ));
         }
@@ -786,10 +727,8 @@ inline __device__ void compute_dq_dk_dv(const Params &params) {
 
     // The block index for the batch.
     const int bidb = blockIdx.x;
-    // const int bidb = blockIdx.y;
     // The block index for the head.
     const int bidh = blockIdx.y;
-    // const int bidh = blockIdx.z;
     // The thread index.
     const int tidx = threadIdx.x;
 

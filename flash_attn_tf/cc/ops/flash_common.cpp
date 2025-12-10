@@ -68,10 +68,6 @@ void set_params_fprop(Flash_fwd_params &params,
         params.v_batch_stride = cute::get<0>(vs);
         params.o_batch_stride = cute::get<0>(os);
 		// XXX idk
-        // if (seqlenq_ngroups_swapped) {
-        //      params.q_batch_stride *= seqlen_q;
-        //      params.o_batch_stride *= seqlen_q;
-        // }
     }
 
     params.cu_seqlens_q = static_cast<int *>(cu_seqlens_q_d);
@@ -104,8 +100,6 @@ void set_params_fprop(Flash_fwd_params &params,
     params.p_dropout = 1.f - p_dropout;
     // Convert p from float to int so we don't have to convert the random uint to float to compare.
     // [Minor] We want to round down since when we do the comparison we use <= instead of <
-    // params.p_dropout_in_uint = uint32_t(std::floor(params.p_dropout * 4294967295.0));
-    // params.p_dropout_in_uint16_t = uint16_t(std::floor(params.p_dropout * 65535.0));
     params.p_dropout_in_uint8_t = uint8_t(std::floor(params.p_dropout * 255.0));
     params.rp_dropout = 1.f / params.p_dropout;
     params.scale_softmax_rp_dropout = params.rp_dropout * params.scale_softmax;
@@ -150,7 +144,6 @@ int num_splits_heuristic(int batch_nheads_mblocks, int num_SMs, int num_n_blocks
         } else {
             float n_waves = float(batch_nheads_mblocks * num_splits) / num_SMs;
             float eff = n_waves / ceil(n_waves);
-            // printf("num_splits = %d, eff = %f\n", num_splits, eff);
             if (eff > max_efficiency) { max_efficiency = eff; }
             efficiency.push_back(eff);
         }
@@ -158,7 +151,6 @@ int num_splits_heuristic(int batch_nheads_mblocks, int num_SMs, int num_n_blocks
     for (int num_splits = 1; num_splits <= max_splits; num_splits++) {
         if (!is_split_eligible(num_splits)) { continue; }
         if (efficiency[num_splits - 1] >= 0.85 * max_efficiency) {
-            // printf("num_splits chosen = %d\n", num_splits);
             return num_splits;
         }
     }
@@ -183,12 +175,8 @@ void set_params_splitkv(Flash_fwd_params &params, const int batch_size,
             params.num_splits = num_splits_heuristic(batch_size * num_heads * num_m_blocks, multiProcessorCount, num_n_blocks, 128);
         }
         if (params.num_splits > 1) {
-            // at::Tensor softmax_lse_accum = torch::empty({params.num_splits, batch_size, num_heads, max_seqlen_q}, opts.dtype(at::kFloat));
-            // at::Tensor out_accum = torch::empty({params.num_splits, batch_size, num_heads, max_seqlen_q, head_size_rounded}, opts.dtype(at::kFloat));
 			C10_CUDA_CHECK(cudaMalloc((void**)&params.softmax_lseaccum_ptr, params.num_splits * batch_size * num_heads * max_seqlen_q * 4)); // float32
 			C10_CUDA_CHECK(cudaMalloc((void**)&params.oaccum_ptr, params.num_splits * batch_size * num_heads * max_seqlen_q * head_size_rounded * 4));
-            // params.softmax_lseaccum_ptr = softmax_lse_accum.data_ptr();
-            // params.oaccum_ptr = out_accum.data_ptr();
         }
         FLASH_CHECK(params.num_splits <= 128, "num_splits > 128 not supported");
     }
