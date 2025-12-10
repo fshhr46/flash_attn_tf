@@ -16,6 +16,7 @@ ARTIFACTS_DIR="$(pwd)/artifacts"
 
 CLEAN=false
 MEMORY_LIMIT=""
+JOBS=""
 NO_CLANG_TIDY=true
 RELEASE_VERSION=false
 TESTS=false
@@ -57,8 +58,17 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       ;;
+    --jobs)
+      if [[ -n "${2:-}" ]]; then
+        JOBS="$2"
+        shift 2
+      else
+        echo "Error: --jobs requires a value." >&2
+        exit 1
+      fi
+      ;;
     *)
-      echo "Error: Invalid argument '$1'. Allowed arguments are '--clean', '--no-clang-tidy', '--release-version', '--tests', '--memory'." >&2
+      echo "Error: Invalid argument '$1'. Allowed arguments are '--clean', '--no-clang-tidy', '--release-version', '--tests', '--memory', '--jobs'." >&2
       exit 1
       ;;
   esac
@@ -100,6 +110,11 @@ fi
 # Create the local artifacts directory if it doesn't exist
 mkdir -p "$ARTIFACTS_DIR"
 
+BAZEL_JOBS_ARG=""
+if [[ -n "$JOBS" ]]; then
+  BAZEL_JOBS_ARG="--jobs=$JOBS"
+fi
+
 BUILD_SCRIPT=$(cat <<-EOS
 set -euo pipefail
 
@@ -122,8 +137,8 @@ BAZEL_CMD="./bazel --output_user_root=$BAZEL_CACHE_DIR"
 
 uv pip install -r requirements-dev.txt;
 ./configure.py
-[[ "$NO_CLANG_TIDY" == false ]] && \$BAZEL_CMD build //... --config=clang-tidy
-\$BAZEL_CMD build --enable_runfiles build_pip_pkg
+[[ "$NO_CLANG_TIDY" == false ]] && \$BAZEL_CMD build $BAZEL_JOBS_ARG //... --config=clang-tidy
+\$BAZEL_CMD build $BAZEL_JOBS_ARG --enable_runfiles build_pip_pkg
 rm -rf artifacts/*.whl
 ./bazel-bin/build_pip_pkg artifacts $([ "$RELEASE_VERSION" = true ] && echo --release-version)
 echo 'Build complete.'
