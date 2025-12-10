@@ -9,7 +9,7 @@ class FlashAttnTest(test.TestCase):
 
   @test_util.run_gpu_only
   def testFlashAttnFwd(self):
-    with self.test_session():
+    with self.test_session(use_gpu=True, force_gpu=True):
       with ops.device("/gpu:0"):
         batch_size = 2
         seqlen_q = 128
@@ -50,7 +50,7 @@ class FlashAttnTest(test.TestCase):
 
   @test_util.run_gpu_only
   def testFlashAttnBwd(self):
-    with self.test_session():
+    with self.test_session(use_gpu=True, force_gpu=True):
       with ops.device("/gpu:0"):
         batch_size = 2
         seqlen_q = 128
