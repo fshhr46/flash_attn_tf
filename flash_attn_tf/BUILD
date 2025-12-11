@@ -27,11 +27,8 @@ cc_library(
     name = "flash_attn_ops_gpu",
     srcs = [
         "cc/kernels/flash_ops.cc",
-        "cc/kernels/flash_bwd_hdim32_bf16_sm80.cu.cc",
-        "cc/kernels/flash_fwd_hdim32_bf16_sm80.cu.cc",
-        "cc/kernels/flash_fwd_split_hdim32_bf16_sm80.cu.cc",
     ] + glob([
-        # "cc/kernels/flash_*.cu.cc",
+        "cc/kernels/flash_*.cu.cc",
         "cc/ops/*.cpp",
     ]),
     hdrs = glob([
