@@ -58,7 +58,6 @@ cc_library(
 cc_binary(
     name = "python/ops/_flash_attn_ops.so",
     srcs = [
-        "cc/kernels/flash_ops.cc",
         "cc/ops/flash_common.h",
         "cc/ops/mha_fwd.h",
         "cc/ops/mha_bwd.h",
