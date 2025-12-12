@@ -78,11 +78,9 @@
     }                                        \
   }()
 
-// Optimized to only include power-of-2 head dimensions (standard practice).
-// This significantly reduces binary size.
 // 64 (BERT/small), 128 (Llama/Mistral), 256 (Large/Long Context).
 // 32 is kept for tiny models.
-// Intermediate sizes (96, 160, 192, 224) are commented out and will map to the next power of 2.
+// Intermediate sizes (96, 160, 192, 224) are also included.
 #define HEADDIM_SWITCH(HEADDIM, ...)   \
   [&] {                                    \
     if (HEADDIM <= 32) {                   \
@@ -91,13 +89,13 @@
     } else if (HEADDIM <= 64) {            \
       constexpr static int kHeadDim = 64;  \
       return __VA_ARGS__();                \
-    /* } else if (HEADDIM <= 96) {            \
+    } else if (HEADDIM <= 96) {            \
       constexpr static int kHeadDim = 96;  \
-      return __VA_ARGS__(); */               \
+      return __VA_ARGS__();                \
     } else if (HEADDIM <= 128) {           \
       constexpr static int kHeadDim = 128; \
       return __VA_ARGS__();                \
-    /* } else if (HEADDIM <= 160) {           \
+    } else if (HEADDIM <= 160) {           \
       constexpr static int kHeadDim = 160; \
       return __VA_ARGS__();                \
     } else if (HEADDIM <= 192) {           \
@@ -105,7 +103,7 @@
       return __VA_ARGS__();                \
     } else if (HEADDIM <= 224) {           \
       constexpr static int kHeadDim = 224; \
-      return __VA_ARGS__(); */               \
+      return __VA_ARGS__();                \
     } else if (HEADDIM <= 256) {           \
       constexpr static int kHeadDim = 256; \
       return __VA_ARGS__();                \

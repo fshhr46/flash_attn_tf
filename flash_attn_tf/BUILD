@@ -25,8 +25,8 @@ cc_library(
 
 # Explicitly list the head dimensions we want to compile.
 # Match this with static_switch.h
-# HDIMS = [32, 64, 96, 128, 160, 192, 224, 256]
-HDIMS = [32, 64, 128, 256]
+HDIMS = [32, 64, 96, 128, 160, 192, 224, 256]
+# HDIMS = [32, 64, 128, 256]
 
 cc_library(
     name = "flash_attn_ops_gpu_fwd",
