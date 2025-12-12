@@ -23,6 +23,11 @@ cc_library(
     ],
 )
 
+# Explicitly list the head dimensions we want to compile.
+# Match this with static_switch.h
+# HDIMS = [32, 64, 96, 128, 160, 192, 224, 256]
+HDIMS = [32, 64, 128, 256]
+
 cc_library(
     name = "flash_attn_ops_gpu_fwd",
     srcs = [
@@ -30,7 +35,9 @@ cc_library(
         "cc/ops/mha_fwd.cpp",
         "cc/ops/flash_common.cpp",
     ] + glob([
-        "cc/kernels/flash_fwd_*.cu.cc",
+        "cc/kernels/flash_fwd_hdim%d_*.cu.cc" % hdim for hdim in HDIMS
+    ] + [
+        "cc/kernels/flash_fwd_split_hdim%d_*.cu.cc" % hdim for hdim in HDIMS
     ]),
     hdrs = glob([
         "cc/kernels/*.h",
@@ -59,7 +66,7 @@ cc_library(
         "cc/ops/mha_bwd.cpp",
         "cc/ops/flash_common.cpp",
     ] + glob([
-        "cc/kernels/flash_bwd_*.cu.cc",
+        "cc/kernels/flash_bwd_hdim%d_*.cu.cc" % hdim for hdim in HDIMS
     ]),
     hdrs = glob([
         "cc/kernels/*.h",
