@@ -121,7 +121,8 @@ set -euo pipefail
 export PIP_CACHE_DIR="$PIP_CACHE_DIR"
 export TF_NEED_CUDA=1
 export TF_CUDA_VERSION=12.4
-export TF_CUDA_COMPUTE_CAPABILITIES="7.0,7.5,8.0,8.6,8.9,9.0"
+# T4/L4, A100, H100
+export TF_CUDA_COMPUTE_CAPABILITIES="7.5,8.0,9.0"
 
 if [ ! -d "$VENV_DIR/bin" ]; then
   echo 'Creating and setting up virtual environment...'
