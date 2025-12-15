@@ -16,6 +16,8 @@ class FlashAttnTest(test.TestCase):
         seqlen_k = 128
         nheads = 4
         headdim = 32
+        cu_seqlens_q = tf.constant([0, seqlen_q // 2], dtype=tf.int32)
+        cu_seqlens_k = tf.constant([0, seqlen_k // 2], dtype=tf.int32)
         
         q = tf.random.normal((batch_size, seqlen_q, nheads, headdim), dtype=tf.float16)
         k = tf.random.normal((batch_size, seqlen_k, nheads, headdim), dtype=tf.float16)
@@ -37,7 +39,9 @@ class FlashAttnTest(test.TestCase):
             l_k=seqlen_k,
             h_k=nheads,
             dtype=0, # ignored, inferred from T
-            seed=42
+            seed=42,
+            cu_seqlens_q=cu_seqlens_q,
+            cu_seqlens_k=cu_seqlens_k
         )
         
         self.assertEqual(out.shape, (batch_size, seqlen_q, nheads, headdim))
@@ -45,6 +49,8 @@ class FlashAttnTest(test.TestCase):
 
         # Force execution
         out_val = self.evaluate(out)
+        print(out_val.shape)
+        print(out_val)
         self.assertEqual(out_val.shape, (batch_size, seqlen_q, nheads, headdim))
 
 
@@ -63,6 +69,9 @@ class FlashAttnTest(test.TestCase):
         v = tf.random.normal((batch_size, seqlen_k, nheads, headdim), dtype=tf.float16)
         dout = tf.random.normal((batch_size, seqlen_q, nheads, headdim), dtype=tf.float16)
         
+        cu_seqlens_q = tf.constant([0, seqlen_q // 2], dtype=tf.int32)
+        cu_seqlens_k = tf.constant([0, seqlen_k // 2], dtype=tf.int32)
+
         # Run forward first to get outputs needed for backward
         out, lse = flash_attn_ops.flash_mha_fwd(
             q, k, v, 
@@ -78,7 +87,9 @@ class FlashAttnTest(test.TestCase):
             l_k=seqlen_k,
             h_k=nheads,
             dtype=0,
-            seed=42
+            seed=42,
+            cu_seqlens_q=cu_seqlens_q,
+            cu_seqlens_k=cu_seqlens_k
         )
 
         dq, dk, dv = flash_attn_ops.flash_mha_bwd(
@@ -95,7 +106,9 @@ class FlashAttnTest(test.TestCase):
             d=headdim,
             l_k=seqlen_k,
             h_k=nheads,
-            seed=42
+            seed=42,
+            cu_seqlens_q=cu_seqlens_q,
+            cu_seqlens_k=cu_seqlens_k
         )
 
         self.assertEqual(dq.shape, q.shape)
@@ -104,6 +117,8 @@ class FlashAttnTest(test.TestCase):
 
         # Force execution
         dq_val = self.evaluate(dq)
+        print(dq_val.shape)
+        print(dq_val)
         self.assertEqual(dq_val.shape, (batch_size, seqlen_q, nheads, headdim))
 
 if __name__ == '__main__':
