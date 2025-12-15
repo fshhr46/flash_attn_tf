@@ -125,6 +125,8 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
 	void* dq = buffers[6];
 	void* dk = buffers[7];
 	void* dv = buffers[8];
+    void* cu_seqlens_q = buffers[9];
+    void* cu_seqlens_k = buffers[10];
 
 	auto args = Unpack<mha_bwd_args>(opaque, opaque_len);
 
@@ -221,8 +223,8 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
                      head_size, head_size_rounded,
                      q, k, v, o,
                      dout, dq, dk_expanded, dv_expanded,
-                     nullptr,
-                     nullptr,
+                     cu_seqlens_q,
+                     cu_seqlens_k,
                      loop ? dq_accum : nullptr,
                      nullptr,
                      nullptr,

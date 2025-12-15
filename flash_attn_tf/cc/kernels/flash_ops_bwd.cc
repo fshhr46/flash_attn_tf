@@ -29,6 +29,8 @@ REGISTER_OP("FlashMHABwd")
     .Input("l_k: int32")
     .Input("h_k: int32")
     .Input("seed: int64")
+    .Input("cu_seqlens_q: int32")
+    .Input("cu_seqlens_k: int32")
     .Output("dq: T")
     .Output("dk: T")
     .Output("dv: T")
@@ -87,6 +89,8 @@ class FlashMHABwdOp : public OpKernel {
     int l_k = context->input(16).scalar<int>()();
     int h_k = context->input(17).scalar<int>()();
     uint64_t seed = context->input(18).scalar<int64>()();
+    const Tensor& cu_seqlens_q = context->input(19);
+    const Tensor& cu_seqlens_k = context->input(20);
 
     // Outputs
     Tensor* dq = nullptr;
@@ -120,6 +124,9 @@ class FlashMHABwdOp : public OpKernel {
     }
     args.seed = seed;
 
+    void* cu_seqlens_q_ptr = cu_seqlens_q.NumElements() > 0 ? (void*)cu_seqlens_q.data() : nullptr;
+    void* cu_seqlens_k_ptr = cu_seqlens_k.NumElements() > 0 ? (void*)cu_seqlens_k.data() : nullptr;
+
     void* buffers[] = {
         (void*)dout.data(),
         (void*)q.data(),
@@ -129,7 +136,9 @@ class FlashMHABwdOp : public OpKernel {
         (void*)softmax_lse.data(),
         (void*)dq->data(),
         (void*)dk->data(),
-        (void*)dv->data()
+        (void*)dv->data(),
+        cu_seqlens_q_ptr,
+        cu_seqlens_k_ptr
     };
 
     std::string opaque = Pack(args);

@@ -40,6 +40,8 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
 	void* v = buffers[2];
 	void* o = buffers[3];
 	void* lse = buffers[4];
+    void* cu_seqlens_q = buffers[5];
+    void* cu_seqlens_k = buffers[6];
 
 	mha_fwd_args args = Unpack<mha_fwd_args>(opaque, opaque_len);
 
@@ -102,8 +104,8 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
                      num_heads, num_heads_k,
                      head_size, head_size_rounded,
                      q_padded, k_padded, v_padded, o,
-                     /*cu_seqlens_q_d=*/nullptr,
-                     /*cu_seqlens_k_d=*/nullptr,
+                     cu_seqlens_q,
+                     cu_seqlens_k,
                      /*seqused_k=*/nullptr,
                      args.return_softmax ? p : nullptr,
                      lse,

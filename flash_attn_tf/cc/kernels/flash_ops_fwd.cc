@@ -26,6 +26,8 @@ REGISTER_OP("FlashMHAFwd")
     .Input("h_k: int32")
     .Input("dtype: int32")
     .Input("seed: int64")
+    .Input("cu_seqlens_q: int32")
+    .Input("cu_seqlens_k: int32")
     .Output("output: T")
     .Output("softmax_lse: float32")
     .Attr("T: {half, bfloat16}") // BF16 or FP16
@@ -74,6 +76,8 @@ class FlashMHAFwdOp : public OpKernel {
     int h_k = context->input(13).scalar<int>()();
     // input(14) is dtype, which we ignore because we rely on template T
     uint64_t seed = context->input(15).scalar<int64>()();
+    const Tensor& cu_seqlens_q = context->input(16);
+    const Tensor& cu_seqlens_k = context->input(17);
 
     // Outputs
     Tensor* output = nullptr;
@@ -106,12 +110,17 @@ class FlashMHAFwdOp : public OpKernel {
     }
     args.seed = seed;
 
+    void* cu_seqlens_q_ptr = cu_seqlens_q.NumElements() > 0 ? (void*)cu_seqlens_q.data() : nullptr;
+    void* cu_seqlens_k_ptr = cu_seqlens_k.NumElements() > 0 ? (void*)cu_seqlens_k.data() : nullptr;
+
     void* buffers[] = {
         (void*)q.data(),
         (void*)k.data(),
         (void*)v.data(),
         (void*)output->data(),
-        (void*)softmax_lse->data()
+        (void*)softmax_lse->data(),
+        cu_seqlens_q_ptr,
+        cu_seqlens_k_ptr
     };
 
     std::string opaque = Pack(args);
