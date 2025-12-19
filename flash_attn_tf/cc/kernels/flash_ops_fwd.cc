@@ -13,6 +13,7 @@ REGISTER_OP("FlashMHAFwd")
     .Input("q: T")
     .Input("k: T")
     .Input("v: T")
+    .Input("p_dropout: float32")
     .Input("softmax_scale: float32")
     .Input("is_causal: bool")
     .Input("window_size_left: int32")
@@ -30,6 +31,7 @@ REGISTER_OP("FlashMHAFwd")
     .Input("cu_seqlens_k: int32")
     .Output("output: T")
     .Output("softmax_lse: float32")
+    .Output("softmax: T")
     .Attr("T: {half, bfloat16}") // BF16 or FP16
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
         // q: [batch_size, seqlen_q, nheads, headdim]
@@ -63,21 +65,22 @@ class FlashMHAFwdOp : public OpKernel {
     const Tensor& k = context->input(1);
     const Tensor& v = context->input(2);
 
-    float softmax_scale = context->input(3).scalar<float>()();
-    bool is_causal = context->input(4).scalar<bool>()();
-    int window_size_left = context->input(5).scalar<int>()();
-    int window_size_right = context->input(6).scalar<int>()();
-    bool return_softmax = context->input(7).scalar<bool>()();
-    int n = context->input(8).scalar<int>()();
-    int l = context->input(9).scalar<int>()();
-    int h = context->input(10).scalar<int>()();
-    int d = context->input(11).scalar<int>()();
-    int l_k = context->input(12).scalar<int>()();
-    int h_k = context->input(13).scalar<int>()();
-    // input(14) is dtype, which we ignore because we rely on template T
-    uint64_t seed = context->input(15).scalar<int64>()();
-    const Tensor& cu_seqlens_q = context->input(16);
-    const Tensor& cu_seqlens_k = context->input(17);
+    float p_dropout = context->input(3).scalar<float>()();
+    float softmax_scale = context->input(4).scalar<float>()();
+    bool is_causal = context->input(5).scalar<bool>()();
+    int window_size_left = context->input(6).scalar<int>()();
+    int window_size_right = context->input(7).scalar<int>()();
+    bool return_softmax = context->input(8).scalar<bool>()();
+    int n = context->input(9).scalar<int>()();
+    int l = context->input(10).scalar<int>()();
+    int h = context->input(11).scalar<int>()();
+    int d = context->input(12).scalar<int>()();
+    int l_k = context->input(13).scalar<int>()();
+    int h_k = context->input(14).scalar<int>()();
+    // input(15) is dtype, which we ignore because we rely on template T
+    uint64_t seed = context->input(16).scalar<int64>()();
+    const Tensor& cu_seqlens_q = context->input(17);
+    const Tensor& cu_seqlens_k = context->input(18);
 
     // Outputs
     Tensor* output = nullptr;
@@ -88,9 +91,16 @@ class FlashMHAFwdOp : public OpKernel {
     TensorShape lse_shape({n, h, l}); 
     OP_REQUIRES_OK(context, context->allocate_output(1, lse_shape, &softmax_lse));
 
+    Tensor* softmax = nullptr;
+    if (return_softmax) {
+        OP_REQUIRES_OK(context, context->allocate_output(2, TensorShape({n, h, l, l_k}), &softmax));
+    } else {
+        OP_REQUIRES_OK(context, context->allocate_output(2, TensorShape({0}), &softmax));
+    }
+
     // Construct args
     mha_fwd_args args;
-    args.p_dropout = 0.0f; 
+    args.p_dropout = p_dropout;
     args.softmax_scale = softmax_scale;
     args.is_causal = is_causal;
     args.window_size_left = window_size_left;
@@ -120,7 +130,8 @@ class FlashMHAFwdOp : public OpKernel {
         (void*)output->data(),
         (void*)softmax_lse->data(),
         cu_seqlens_q_ptr,
-        cu_seqlens_k_ptr
+        cu_seqlens_k_ptr,
+        (void*)(return_softmax ? softmax->data() : nullptr)
     };
 
     std::string opaque = Pack(args);
@@ -135,6 +146,7 @@ class FlashMHAFwdOp : public OpKernel {
 
 REGISTER_KERNEL_BUILDER(
     Name("FlashMHAFwd").Device(DEVICE_GPU).TypeConstraint<Eigen::half>("T")
+        .HostMemory("p_dropout")
         .HostMemory("softmax_scale")
         .HostMemory("is_causal")
         .HostMemory("window_size_left")
@@ -152,6 +164,7 @@ REGISTER_KERNEL_BUILDER(
 
 REGISTER_KERNEL_BUILDER(
     Name("FlashMHAFwd").Device(DEVICE_GPU).TypeConstraint<bfloat16>("T")
+        .HostMemory("p_dropout")
         .HostMemory("softmax_scale")
         .HostMemory("is_causal")
         .HostMemory("window_size_left")

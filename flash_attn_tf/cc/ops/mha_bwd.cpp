@@ -240,9 +240,9 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     auto launch = &run_mha_bwd;
 
 	C10_CUDA_CHECK(cudaMalloc((void**)&params.rng_state, 2 * 8)); // 2 * float64
-    if (is_dropout)  {
-		FLASH_CHECK(false, "don't support dropout yet");
-    }
+    // if (is_dropout)  {
+	// 	FLASH_CHECK(false, "don't support dropout yet");
+    // }
 
 
 

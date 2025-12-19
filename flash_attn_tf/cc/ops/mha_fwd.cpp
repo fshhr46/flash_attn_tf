@@ -42,6 +42,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
 	void* lse = buffers[4];
     void* cu_seqlens_q = buffers[5];
     void* cu_seqlens_k = buffers[6];
+    void* p = buffers[7];
 
 	mha_fwd_args args = Unpack<mha_fwd_args>(opaque, opaque_len);
 
@@ -91,9 +92,12 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     const int seqlen_q_rounded = round_multiple(seqlen_q, 128);
     const int seqlen_k_rounded = round_multiple(seqlen_k, 128);
 
-	void* p = nullptr;
+	void* p_ptr = nullptr;
+    // if (args.return_softmax) {
+	// 	FLASH_CHECK(false, "no return softmax");
+    // }
     if (args.return_softmax) {
-		FLASH_CHECK(false, "no return softmax");
+        p_ptr = p;
     }
 
     Flash_fwd_params params;
@@ -107,7 +111,7 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
                      cu_seqlens_q,
                      cu_seqlens_k,
                      /*seqused_k=*/nullptr,
-                     args.return_softmax ? p : nullptr,
+                     p_ptr,
                      lse,
                      args.p_dropout,
                      args.softmax_scale,
@@ -125,9 +129,9 @@ void mha_fwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opa
     // number of times random will be generated per thread, to offset philox counter in thc random
 	C10_CUDA_CHECK(cudaMalloc((void**)&params.rng_state, 2 * 8)); // 2 * float64
 
-    if (args.p_dropout > 0.0)  {
-		FLASH_CHECK(false, "don't support dropout yet");
-    }
+    // if (args.p_dropout > 0.0)  {
+	// 	FLASH_CHECK(false, "don't support dropout yet");
+    // }
 
 
     if (has_alibi) {
