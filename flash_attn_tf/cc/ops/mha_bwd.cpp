@@ -199,23 +199,21 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
         // IMPORTANT:
         // When `cu_seqlens_q` is non-null, the backward CUDA kernels index `dq_accum` using
         // an additional `+ 128 * bidb` term (see `flash_bwd_preprocess_kernel.h` and
-        // `flash_bwd_kernel.h`). This requires allocating `dq_accum` with extra space:
+        // `flash_bwd_kernel.h`). This requires allocating `dq_accum` with extra space.
         //
+        // Allocate rows:
         //   dq_accum_rows = total_q + 128 * batch_size
         //
-        // where total_q is the sum of per-example query lengths (for fixed-length,
-        // total_q = batch_size * seqlen_q).
-        //
-        // If we only allocate `batch_size * seqlen_q_rounded` rows, kernels can write OOB and
-        // trigger `CUDA error: an illegal memory access was encountered`.
+        // For fixed-length sequences, total_q = batch_size * seqlen_q. This is also an upper
+        // bound for variable-length if seqlen_q is the max length.
         const bool has_cu_seqlens = (cu_seqlens_q != nullptr) && (cu_seqlens_k != nullptr);
         const size_t total_q = static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q);
-        const size_t dq_accum_rows = has_cu_seqlens ? (total_q + 128ull * static_cast<size_t>(batch_size))
-                                                    : (static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q_rounded));
+        const size_t dq_accum_rows = has_cu_seqlens
+            ? (total_q + 128ull * static_cast<size_t>(batch_size))
+            : (static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q_rounded));
         const size_t dq_accum_elems_per_row = static_cast<size_t>(num_heads) * static_cast<size_t>(head_size_rounded);
         const size_t dq_accum_bytes_per_split = dq_accum_rows * dq_accum_elems_per_row * sizeof(float);
 
-        // Optional debug logging
         const char* dbg = std::getenv("FLASH_ATTN_TF_DEBUG_BWD");
         if (dbg && dbg[0] == '1') {
             std::fprintf(
@@ -274,8 +272,9 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     } else {
         const bool has_cu_seqlens = (cu_seqlens_q != nullptr) && (cu_seqlens_k != nullptr);
         const size_t total_q = static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q);
-        const size_t dq_accum_rows = has_cu_seqlens ? (total_q + 128ull * static_cast<size_t>(batch_size))
-                                                    : (static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q_rounded));
+        const size_t dq_accum_rows = has_cu_seqlens
+            ? (total_q + 128ull * static_cast<size_t>(batch_size))
+            : (static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q_rounded));
         const size_t dq_accum_elems_per_row = static_cast<size_t>(num_heads) * static_cast<size_t>(head_size_rounded);
         params.dq_accum_split_stride = static_cast<int64_t>(dq_accum_rows * dq_accum_elems_per_row);
     }
