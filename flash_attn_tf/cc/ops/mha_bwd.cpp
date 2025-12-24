@@ -2,6 +2,7 @@
 #include <cutlass/numeric_types.h>
 #include <cuda_runtime_api.h>
 #include <cute/layout.hpp>
+#include <cstdio>
 
 #include "flash.h"
 #include "exception.h"
@@ -195,14 +196,45 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
     void* dk_accum = nullptr;
 	void* dv_accum = nullptr;
     if (loop) {
+        // IMPORTANT:
+        // When `cu_seqlens_q` is non-null, the backward CUDA kernels index `dq_accum` using
+        // an additional `+ 128 * bidb` term (see `flash_bwd_preprocess_kernel.h` and
+        // `flash_bwd_kernel.h`). This requires allocating `dq_accum` with extra space:
+        //
+        //   dq_accum_rows = total_q + 128 * batch_size
+        //
+        // where total_q is the sum of per-example query lengths (for fixed-length,
+        // total_q = batch_size * seqlen_q).
+        //
+        // If we only allocate `batch_size * seqlen_q_rounded` rows, kernels can write OOB and
+        // trigger `CUDA error: an illegal memory access was encountered`.
+        const bool has_cu_seqlens = (cu_seqlens_q != nullptr) && (cu_seqlens_k != nullptr);
+        const size_t total_q = static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q);
+        const size_t dq_accum_rows = has_cu_seqlens ? (total_q + 128ull * static_cast<size_t>(batch_size))
+                                                    : (static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q_rounded));
+        const size_t dq_accum_elems_per_row = static_cast<size_t>(num_heads) * static_cast<size_t>(head_size_rounded);
+        const size_t dq_accum_bytes_per_split = dq_accum_rows * dq_accum_elems_per_row * sizeof(float);
+
+        // Optional debug logging
+        const char* dbg = std::getenv("FLASH_ATTN_TF_DEBUG_BWD");
+        if (dbg && dbg[0] == '1') {
+            std::fprintf(
+                stderr,
+                "[flash_attn_tf][mha_bwd] batch=%d seqlen_q=%d seqlen_q_rounded=%d heads=%d head_size_rounded=%d "
+                "has_cu_seqlens=%d total_q=%zu dq_accum_rows=%zu dq_accum_bytes_per_split=%zu\\n",
+                batch_size, seqlen_q, seqlen_q_rounded, num_heads, head_size_rounded,
+                int(has_cu_seqlens), total_q, dq_accum_rows, dq_accum_bytes_per_split
+            );
+        }
+
         if (!args.deterministic) {
-			C10_CUDA_CHECK(cudaMalloc(&dq_accum, batch_size * seqlen_q_rounded * num_heads * head_size_rounded * 4));
-			C10_CUDA_CHECK(cudaMemset(dq_accum, 0, batch_size * seqlen_q_rounded * num_heads * head_size_rounded * 4));
+			C10_CUDA_CHECK(cudaMalloc(&dq_accum, dq_accum_bytes_per_split));
+			C10_CUDA_CHECK(cudaMemset(dq_accum, 0, dq_accum_bytes_per_split));
         } else {
             const int nsplits = (sm_count + batch_size * num_heads - 1) / (batch_size * num_heads);
-			C10_CUDA_CHECK(cudaMalloc(&dq_accum, nsplits * batch_size * seqlen_q_rounded * num_heads * head_size_rounded * 4));
+			C10_CUDA_CHECK(cudaMalloc(&dq_accum, static_cast<size_t>(nsplits) * dq_accum_bytes_per_split));
 			// previously allocated with torch.zeros, so i guess we need to zero it
-			C10_CUDA_CHECK(cudaMemset(dq_accum, 0, nsplits * batch_size * seqlen_q_rounded * num_heads * head_size_rounded * 4));
+			C10_CUDA_CHECK(cudaMemset(dq_accum, 0, static_cast<size_t>(nsplits) * dq_accum_bytes_per_split));
         }
     }
 
@@ -235,7 +267,18 @@ mha_bwd(cudaStream_t stream, void **buffers, const char* opaque, size_t opaque_l
                      window_size_left,
                      window_size_right,
                      args.deterministic);
-    params.dq_accum_split_stride = !args.deterministic ? 0 : (batch_size * seqlen_q_rounded * num_heads * head_size_rounded);
+    // The CUDA kernels treat `dq_accum_split_stride` as an element stride between split buffers.
+    // It must match the number of elements in one dq_accum buffer (not bytes).
+    if (!args.deterministic) {
+        params.dq_accum_split_stride = 0;
+    } else {
+        const bool has_cu_seqlens = (cu_seqlens_q != nullptr) && (cu_seqlens_k != nullptr);
+        const size_t total_q = static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q);
+        const size_t dq_accum_rows = has_cu_seqlens ? (total_q + 128ull * static_cast<size_t>(batch_size))
+                                                    : (static_cast<size_t>(batch_size) * static_cast<size_t>(seqlen_q_rounded));
+        const size_t dq_accum_elems_per_row = static_cast<size_t>(num_heads) * static_cast<size_t>(head_size_rounded);
+        params.dq_accum_split_stride = static_cast<int64_t>(dq_accum_rows * dq_accum_elems_per_row);
+    }
 
     auto launch = &run_mha_bwd;
 
